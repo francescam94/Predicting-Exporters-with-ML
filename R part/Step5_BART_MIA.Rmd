@@ -16,7 +16,8 @@ library(stringr)
 
 Import data
 ```{r import data}
-load('/Users/francescamicocci/Documents/Export_project/Data/data_for_ML_BART_MIA.RData')
+setwd('your/directory/')
+load('Export_project/Data/data_for_ML_BART_MIA.RData')
 ```
 
 # BART-MIA
@@ -75,66 +76,31 @@ Export the training data to be used. Upload it on terminal. Proceed with the alg
 
 Save data to be used locally.
 ```{r save train test}
-save(train1.m,file= "/Users/francescamicocci/Documents/Export_project/Data/train1.m.RData")
-save(test1.m,file= "/Users/francescamicocci/Documents/Export_project/Data/test1.m.RData")
-save(train2.m,file= "/Users/francescamicocci/Documents/Export_project/Data/train2.m.RData")
-save(test2.m,file= "/Users/francescamicocci/Documents/Export_project/Data/test2.m.RData")
-save(train3.m,file= "/Users/francescamicocci/Documents/Export_project/Data/train3.m.RData")
-save(test3.m,file= "/Users/francescamicocci/Documents/Export_project/Data/test3.m.RData")
-save(train4.m,file= "/Users/francescamicocci/Documents/Export_project/Data/train4.m.RData")
-save(test4.m,file= "/Users/francescamicocci/Documents/Export_project/Data/test4.m.RData")
-save(train5.m,file= "/Users/francescamicocci/Documents/Export_project/Data/train5.m.RData")
-save(test5.m,file= "/Users/francescamicocci/Documents/Export_project/Data/test5.m.RData")
+save(train1.m,file= "Export_project/Data/train1.m.RData")
+save(test1.m,file= "Export_project/Data/test1.m.RData")
+save(train2.m,file= "Export_project/Data/train2.m.RData")
+save(test2.m,file= "Export_project/Data/test2.m.RData")
+save(train3.m,file= "Export_project/Data/train3.m.RData")
+save(test3.m,file= "Export_project/Data/test3.m.RData")
+save(train4.m,file= "Export_project/Data/train4.m.RData")
+save(test4.m,file= "Export_project/Data/test4.m.RData")
+save(train5.m,file= "Export_project/Data/train5.m.RData")
+save(test5.m,file= "Export_project/Data/test5.m.RData")
 ```
 ## SERVER!
-Now open the Terminal and upload the file
-```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train1.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test1.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train2.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test2.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train3.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test3.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train4.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test4.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train5.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test5.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
-For each Sample, open a new R session in a tmux environment, so as to be able to detach the Server session from the local connection. Then load the required libraries, run the model and predict the export probabilities on the test set. For the first sample, compute the variable importance plot, which reports the inclusion proportion of the features.
+Now open the Terminal and upload the file. For each Sample, open a new R session in a tmux environment, so as to be able to detach the Server session from the local connection. Then load the required libraries, run the model and predict the export probabilities on the test set. For the first sample, compute the variable importance plot, which reports the inclusion proportion of the features.
 
 ### Sample 1
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new -s simul_nocov
 R
 library(rJava)
 options(java.parameters="-Xmx150g")
 library("bartMachine")
 
-load("/home/francesca.micocci/Export_project/train1.m.RData")
-load("/home/francesca.micocci/Export_project/test1.m.RData")
+setwd('your/directory/server/')
+load("Export_project/train1.m.RData")
+load("Export_project/test1.m.RData")
 
 y <- factor(train1.m$export,levels=c("1","0"))
 X<-as.data.frame(train1.m)
@@ -146,32 +112,27 @@ test1.m$export<-NULL
 test1.m$bvdidnumber<-NULL
 test1.m$year<-NULL
 bart_machine.fitted1.m<-predict(bart_machine.1, test1.m,type='prob')
-save(bart_machine.fitted1.m,file="/home/francesca.micocci/Export_project/bart.fitted1.m.RData")
+save(bart_machine.fitted1.m,file="Export_project/bart.fitted1.m.RData")
 
 var.imp<-investigate_var_importance(bart_machine.1)
-save(var.imp,file="/home/francesca.micocci/Export_project/var_imp.RData")
+save(var.imp,file=Export_project/var_imp.RData")
 ```
 Detach the process from local computer
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux detach
 ```
 
 ### Sample 2
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new -s bart_mia_2
 R
 library(rJava)
 options(java.parameters="-Xmx150g")
 library("bartMachine")
 
-load("/home/francesca.micocci/Export_project/train2.m.RData")
-load("/home/francesca.micocci/Export_project/test2.m.RData")
+setwd('your/directory/server/')
+load("Export_project/train2.m.RData")
+load("Export_project/test2.m.RData")
 
 y <- factor(train2.m$export,levels=c("1","0"))
 X<-as.data.frame(train2.m)
@@ -183,28 +144,23 @@ test2.m$export<-NULL
 test2.m$bvdidnumber<-NULL
 test2.m$year<-NULL
 bart_machine.fitted2.m<-predict(bart_machine.2, test2.m,type='prob')
-save(bart_machine.fitted2.m,file="/home/francesca.micocci/Export_project/bart.fitted2.m.RData")
+save(bart_machine.fitted2.m,file="Export_project/bart.fitted2.m.RData")
 ```
 Detach the process from local computer
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux detach
 ```
 ### Sample 3
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new -s bart_mia_3
 R
 library(rJava)
 options(java.parameters="-Xmx150g")
 library("bartMachine")
 
-load("/home/francesca.micocci/Export_project/train3.m.RData")
-load("/home/francesca.micocci/Export_project/test3.m.RData")
+setwd('your/directory/server/')
+load("Export_project/train3.m.RData")
+load("Export_project/test3.m.RData")
 
 y <- factor(train3.m$export,levels=c("1","0"))
 X<-as.data.frame(train3.m)
@@ -216,30 +172,25 @@ test3.m$export<-NULL
 test3.m$bvdidnumber<-NULL
 test3.m$year<-NULL
 bart_machine.fitted3.m<-predict(bart_machine.3, test3.m,type='prob')
-save(bart_machine.fitted3.m,file="/home/francesca.micocci/Export_project/bart.fitted3.m.RData")
+save(bart_machine.fitted3.m,file="Export_project/bart.fitted3.m.RData")
 ```
 
 Detach the process from local computer
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux detach
 ```
 
 ### Sample 4
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new -s bart_mia_4
 R
 library(rJava)
 options(java.parameters="-Xmx150g")
 library("bartMachine")
 
-load("/home/francesca.micocci/Export_project/train4.m.RData")
-load("/home/francesca.micocci/Export_project/test4.m.RData")
+setwd('your/directory/server/')
+load("Export_project/train4.m.RData")
+load("Export_project/test4.m.RData")
 
 y <- factor(train4.m$export,levels=c("1","0"))
 X<-as.data.frame(train4.m)
@@ -251,30 +202,25 @@ test4.m$export<-NULL
 test4.m$bvdidnumber<-NULL
 test4.m$year<-NULL
 bart_machine.fitted4.m<-predict(bart_machine.4, test4.m,type='prob')
-save(bart_machine.fitted4.m,file="/home/francesca.micocci/Export_project/bart.fitted4.m.RData")
+save(bart_machine.fitted4.m,file="Export_project/bart.fitted4.m.RData")
 ```
 
 Detach the process from local computer
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux detach
 ```
 
 ### Sample 5
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new -s bart_mia_5
 R
 library(rJava)
 options(java.parameters="-Xmx150g")
 library("bartMachine")
 
-load("/home/francesca.micocci/Export_project/train5.m.RData")
-load("/home/francesca.micocci/Export_project/test5.m.RData")
+setwd('your/directory/server/')
+load("Export_project/train5.m.RData")
+load("Export_project/test5.m.RData")
 
 y <- factor(train5.m$export,levels = c("1","0"))
 X<-as.data.frame(train5.m)
@@ -286,49 +232,26 @@ test5.m$export<-NULL
 test5.m$bvdidnumber<-NULL
 test5.m$year<-NULL
 bart_machine.fitted5.m<-predict(bart_machine.5, test5.m,type='prob')
-save(bart_machine.fitted5.m,file="/home/francesca.micocci/Export_project/bart.fitted5.m.RData")
+save(bart_machine.fitted5.m,file="Export_project/bart.fitted5.m.RData")
 
 ```
 
 Detach the process from local computer
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux detach
 ```
 
 Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted1.m.RData /Users/francescamicocci/Documents/Server/bart.fitted1.m.RData
-KQyVZQ9v3uL
-
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted2.m.RData /Users/francescamicocci/Documents/Server/bart.fitted2.m.RData
-KQyVZQ9v3uL
-
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted3.m.RData /Users/francescamicocci/Documents/Server/bart.fitted3.m.RData
-KQyVZQ9v3uL
-
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted4.m.RData /Users/francescamicocci/Documents/Server/bart.fitted4.m.RData
-KQyVZQ9v3uL
-
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted5.m.RData /Users/francescamicocci/Documents/Server/bart.fitted5.m.RData
-KQyVZQ9v3uL
-
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Customs/Completed/matrix_24_completed.RData /Users/francescamicocci/Documents/Server/completed_24.RData
-
-
-
-```
 
 ## Evaluate BART-MIA
 Now proceed with the predictions based on BART.
 ```{r load results}
-load("/Users/francescamicocci/Documents/Server/bart.fitted1.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted2.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted3.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted4.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted5.m.RData")
+setwd('your/directory/')
+load("Server/bart.fitted1.m.RData")
+load("Server/bart.fitted2.m.RData")
+load("Server/bart.fitted3.m.RData")
+load("Server/bart.fitted4.m.RData")
+load("Server/bart.fitted5.m.RData")
 ```
 
 Confusion Matrix
@@ -480,6 +403,6 @@ results=merge(results,exporting_history[,c("bvdidnumber","export_type","num_year
 
 Export the dataset
 ```{r}
-save(results,file="/Users/francescamicocci/Documents/Export_project/Data/results.RData")
+save(results,file="Export_project/Data/results.RData")
 ```
 
