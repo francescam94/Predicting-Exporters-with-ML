@@ -24,8 +24,9 @@ library(viridis)
 1. Upload the data
 ```{r upload files}
 rm(list=ls())
-load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
-final<-haven::read_dta("/Users/francescamicocci/Documents/Export_project/Data/final_cutoffs.dta")
+setwd('/your/directory/')
+load("Export_project/Data/results.RData")
+final<-haven::read_dta("Export_project/Data/final_cutoffs.dta")
 
 ```
 
@@ -85,7 +86,7 @@ total_share_pot_exp<-tot_pot_exp/tot_firms*100
 
 table_final$Loc_quot<-table_final$`Share of potential exporters`/total_share_pot_exp
 
-#write_xlsx(table_final,"/Users/francescamicocci/Documents/Export_project/potential_exporters.xlsx")
+#write_xlsx(table_final,"Export_project/potential_exporters.xlsx")
 rm(potential_exporters2,firms_by_nuts,tot_firms,tot_pot_exp,total_share_pot_exp)
 ```
 Now produce a bar-plot with the location quotient
@@ -95,7 +96,7 @@ ggplot(table_final, aes(y=Loc_quot, x=Var1)) +
 ```
 Let us have a look at the map
 ```{r maps non-exp, message=FALSE}
-Map <- read_sf("/Users/francescamicocci/Downloads/ref-nuts-2021-03m/NUTS_RG_03M_2021_3035_LEVL_2.shp/NUTS_RG_03M_2021_3035_LEVL_2.shp")
+Map <- read_sf("ref-nuts-2021-03m/NUTS_RG_03M_2021_3035_LEVL_2.shp/NUTS_RG_03M_2021_3035_LEVL_2.shp")
 Map<-subset(Map,Map$CNTR_CODE=="FR")
 
 Map<-merge(Map,table_final,by.x="NUTS_ID",by.y="Var1")
