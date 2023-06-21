@@ -1,4 +1,4 @@
----
+x---
 title: "Ex-post BART-MIA"
 author: "Francesca Micocci"
 date: "6/29/2021"
@@ -660,7 +660,7 @@ table_final<-merge(potential_exporters2,firms_by_nuts,on="nuts2")
 table_final$`Share of potential exporters`<-(table_final$`Potential exporter`/table_final$Total)*100
 table_final=table_final[table_final$`Potential exporter`>0,]
 
-write_xlsx(table_final,"/Users/francescamicocci/Documents/Export_project/potential_exporters.xlsx")
+write_xlsx(table_final,"/Export_project/potential_exporters.xlsx")
 rm(potential_exporters2,firms_by_nuts)
 ```
 
