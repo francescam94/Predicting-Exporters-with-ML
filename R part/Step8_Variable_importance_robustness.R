@@ -15,8 +15,9 @@ require(foreign)
 library(MASS)
 
 ### Load datasets ----
-load("/home/francesca.micocci/Export_project/train1.m.RData")
-load("/home/francesca.micocci/Export_project/test1.m.RData")
+setwd('your/directory/')
+load("Export_project/train1.m.RData")
+load("Export_project/test1.m.RData")
 
 ### Remove Ile de France
 train=train1.m[which(train1.m$nuts2!="FR10"),]
@@ -81,7 +82,7 @@ performance[1,7]=pr[["auc.integral"]]
 
 #compute VIP -----
 VIP_no_FR10=investigate_var_importance(bart_machine, num_replicates_for_avg = 5)
-save(VIP_no_FR10, file="/home/francesca.micocci/Export_project/VIP_no_FR10.RData")
+save(VIP_no_FR10, file="Export_project/VIP_no_FR10.RData")
 # Ile de France -----
 # Select only  Ile de France
 train2=train1.m[which(train1.m$nuts2=="FR10"),]
@@ -127,5 +128,5 @@ performance[2,7]=pr[["auc.integral"]]
 
 #Compute VIP -----
 VIP_FR10=investigate_var_importance(bart_machine2, num_replicates_for_avg = 5)
-save(VIP_FR10, file="/home/francesca.micocci/Export_project/VIP_FR10.RData")
+save(VIP_FR10, file="Export_project/VIP_FR10.RData")
 
