@@ -29,9 +29,10 @@ library(scales)
 
 Import data
 ```{r import data}
-load('/Users/francescamicocci/Documents/Export_project/Data/results_no_na.RData')
-load('/Users/francescamicocci/Documents/Export_project/Data/results.RData')
-load('/Users/francescamicocci/Documents/Export_project/Data/exporting_history.RData')
+setwd('/your/directory/')
+load('Export_project/Data/results_no_na.RData')
+load('Export_project/Data/results.RData')
+load(Export_project/Data/exporting_history.RData')
 ```
 
 # Check Misclassification
@@ -515,7 +516,7 @@ Perf_BM%>%
 # Probability Distribution of Non-exporters
 
 ```{r prob distrib}
-png("/Users/francescamicocci/Desktop/tiff_pic/Fig3_exporting_score.png", width = 1000, height = 600,units="px",res=150)
+png("tiff_pic/Fig3_exporting_score.png", width = 1000, height = 600,units="px",res=150)
 ggplot(results[which(results$export_type=="Non-exporter"),], aes(x=bart_mia_prob)) +
       geom_density(alpha=.22)+labs( x = "Predicted exporting score", 
       y = "density") +theme_bw()+geom_vline(xintercept=quantile(results[which(results$export_type=="Non-exporter"),]$bart_mia_prob,prob=0.5),linetype="dashed")
@@ -524,14 +525,10 @@ dev.off()
 
 # Variable importance from BART_MIA
 
-Download locally the variable importance dataset generated in Step5
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/var_imp.RData /Users/francescamicocci/Documents/Server/var_imp.RData
-KQyVZQ9v3uL
-```
-Load it here
+Download locally the variable importance dataset generated in Step5 and Load it here
 ```{r load var_imp}
-load("/Users/francescamicocci/Documents/Server/var_imp.RData")
+setwd('/your/directory/')
+load("Server/var_imp.RData")
 ```
 
 Generate graphs
@@ -560,7 +557,7 @@ var.imp<-var.imp[-index.cat,]
 #drop useless stuff
 rm(index.cat,index.nace,index.nuts)
 #Draw rthe graph
-png("/Users/francescamicocci/Desktop/tiff_pic/Fig4_variable_inclusion_proportions.png", width = 1000, height = 600,units="px",res=120)
+png("tiff_pic/Fig4_variable_inclusion_proportions.png", width = 1000, height = 600,units="px",res=120)
 ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) + 
     geom_bar(position="dodge", stat="identity",colour="black")+
     geom_errorbar( aes(x=predictor, ymin=avg_var_props-sd_var_props, ymax=avg_var_props+sd_var_props), width=0.4, colour="#610000", alpha=0.9, size=1)+ theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom",legend.background = element_rect(size=0.5, linetype="solid", 
@@ -618,7 +615,7 @@ firm_nuts$loc_quot.denom<-NULL
 firm_nuts$tot_tot<-NULL
 firm_nuts$tot_above_50<-NULL
 
-write_xlsx(firm_nuts,'/Users/francescamicocci/Documents/Export_project/50_pctile_share.xlsx')
+write_xlsx(firm_nuts,'Export_project/50_pctile_share.xlsx')
 ```
 
 Generate deciles of the distribution and plot the bar composition by industry
