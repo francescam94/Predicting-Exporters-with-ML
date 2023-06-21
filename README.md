@@ -11,6 +11,14 @@ trade credit, and assessing aggregate trade potential. For example, back-of-the-
 that a representative firm with just below-average exporting scores needs up to 44% more cash resources
 and up to 2.5 times more capital to get to foreign markets.
 
-**References**
+
+## Data
+We source firm-level information from ORBIS, compiled by the Bureau Van Dijk.
+
+## Code Structure
+
+All data preparation is performed on Stata, following the ordered codes in the folder *Stata part*. The Machine Learning analysis, as well as the Robustness and Sensitivity checks, are performed on R, following the ordered codes in the folder *R part*. Please note that some of the algorithms are memory intensive, and we had to run them on an external Server with a RAM of 256G.
+
+## References
 
 Micocci, F., & Rungi, A. (2023). Predicting Exporters with Machine Learning. World Trade Review, 1-24. doi:10.1017/S1474745623000265 [here](https://www.cambridge.org/core/journals/world-trade-review/article/predicting-exporters-with-machine-learning/6C2FE8A65C9C0E9560D14687FF1EBC98)
