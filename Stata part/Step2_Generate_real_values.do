@@ -1,5 +1,5 @@
 *Set directory
-cd /your/directory/
+cd "/your/directory/"
 * Import the dta dataset generated as output of Step1
 use "Export_project/Data/Data_from_string.dta", replace
 
