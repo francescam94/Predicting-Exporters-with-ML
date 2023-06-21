@@ -1,5 +1,5 @@
 *Define directory
-cd /your/directory/
+cd "/your/directory/"
 
 * Original data are split in 30 .txt files. We start from importing them using a forvalues cycle and we save the outputs as dta files.
 forvalues i=1/30 {
