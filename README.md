@@ -17,7 +17,10 @@ We source firm-level information from ORBIS, compiled by the Bureau Van Dijk.
 
 ## Code Structure
 
-All data preparation is performed on Stata, following the ordered codes in the folder *Stata part*. The Machine Learning analysis, as well as the Robustness and Sensitivity checks, are performed on R, following the ordered codes in the folder *R part*. Please note that some of the algorithms are memory intensive, and we had to run them on an external Server with a RAM of 256G.
+- All data preparation is performed on Stata, following the ordered codes in the folder *Stata part*.
+- The Machine Learning analysis, as well as the Robustness and Sensitivity checks, are performed on R, following the ordered codes in the folder *R part*.
+
+Please note that some of the algorithms are memory intensive, and we had to run them on an external Server with a RAM of 256G.
 
 ## References
 
