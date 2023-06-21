@@ -15,8 +15,8 @@ require(foreign)
 library(MASS)
 
 ### Load datasets ----
-load("/home/francesca.micocci/Export_project/train1.m.RData")
-load("/home/francesca.micocci/Export_project/test1.m.RData")
+load("Export_project/train1.m.RData")
+load("Export_project/test1.m.RData")
 
 ### Remove Ile de France
 train=train1.m[which(train1.m$nuts2!="FR10"),]
@@ -81,7 +81,7 @@ performance[1,7]=pr[["auc.integral"]]
 
 ### compute VIP -----
 VIP_no_FR10=investigate_var_importance(bart_machine, num_replicates_for_avg = 5)
-save(VIP_no_FR10, file="/home/francesca.micocci/Export_project/VIP_no_FR10.RData")
+save(VIP_no_FR10, file="Export_project/VIP_no_FR10.RData")
 # Ile de France -----
 # Select only  Ile de France
 train2=train1.m[which(train1.m$nuts2=="FR10"),]
@@ -127,10 +127,10 @@ performance[2,7]=pr[["auc.integral"]]
 
 ###Compute VIP -----
 VIP_FR10=investigate_var_importance(bart_machine2, num_replicates_for_avg = 5)
-save(VIP_FR10, file="/home/francesca.micocci/Export_project/VIP_FR10.RData")
+save(VIP_FR10, file="Export_project/VIP_FR10.RData")
 
 # Graph Ile de France ----
-load("/Users/francescamicocci/Documents/Export_project/Versione_finale/VIP_FR10.RData")
+load("Export_project/Versione_finale/VIP_FR10.RData")
 
 var.imp<-as.data.frame(VIP_FR10)
 var.imp<-var.imp[var.imp$avg_var_props>0.01,]
@@ -163,7 +163,7 @@ var.imp$sort<-c(1:nrow(var.imp))
 #remove the row names
 rownames(var.imp) <- NULL
 #Draw rthe graph
-png("/Users/francescamicocci/Desktop/tiff_pic/FigB3_a_variable_inclusion_proportion_FR10.png", width = 1000, height = 600,units="px",res=120)
+png("tiff_pic/FigB3_a_variable_inclusion_proportion_FR10.png", width = 1000, height = 600,units="px",res=120)
 ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) + 
   geom_bar(position="dodge", stat="identity",colour="black")+
   geom_errorbar( aes(x=predictor, ymin=avg_var_props-sd_var_props, ymax=avg_var_props+sd_var_props), width=0.4, colour="#610000", alpha=0.9, size=1)+ theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom",legend.background = element_rect(size=0.5, linetype="solid", 
@@ -172,7 +172,7 @@ ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) +
 
 dev.off()
 
-tiff("/Users/francescamicocci/Documents/Export_project/Versione_finale/variable_inclusion_proportion_FR10.tiff", width = 1000, height = 600,units="px",res=120)
+tiff("Export_project/Versione_finale/variable_inclusion_proportion_FR10.tiff", width = 1000, height = 600,units="px",res=120)
 ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) + 
   geom_bar(position="dodge", stat="identity",colour="black")+
   geom_errorbar( aes(x=predictor, ymin=avg_var_props-sd_var_props, ymax=avg_var_props+sd_var_props), width=0.4, colour="#610000", alpha=0.9, size=1)+ theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom",legend.background = element_rect(size=0.5, linetype="solid", 
@@ -184,7 +184,7 @@ dev.off()
 
 # Graph NO Ile de France -----
 rm(list=ls())
-load("/Users/francescamicocci/Documents/Export_project/Versione_finale/VIP_no_FR10.RData")
+load("Export_project/Versione_finale/VIP_no_FR10.RData")
 
 var.imp<-as.data.frame(VIP_no_FR10)
 var.imp<-var.imp[var.imp$avg_var_props>0.01,]
@@ -214,7 +214,7 @@ var.imp$sort<-c(1:nrow(var.imp))
 rownames(var.imp) <- NULL
 #Draw rthe graph
 
-png("/Users/francescamicocci/Desktop/tiff_pic/FigB3_a_variable_inclusion_proportion_no_FR10.png", width = 1000, height = 600,units="px",res=120)
+png("tiff_pic/FigB3_a_variable_inclusion_proportion_no_FR10.png", width = 1000, height = 600,units="px",res=120)
 ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) + 
   geom_bar(position="dodge", stat="identity",colour="black")+
   geom_errorbar( aes(x=predictor, ymin=avg_var_props-sd_var_props, ymax=avg_var_props+sd_var_props), width=0.4, colour="#610000", alpha=0.9, size=1)+ theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom",legend.background = element_rect(size=0.5, linetype="solid", 
@@ -222,7 +222,7 @@ ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) +
   xlab("Predictor") + ylab("Inclusion proportion")
 
 dev.off()
-tiff("/Users/francescamicocci/Documents/Export_project/Versione_finale/variable_inclusion_proportion_no_FR10.tiff", width = 1000, height = 600,units="px",res=120)
+tiff("Export_project/Versione_finale/variable_inclusion_proportion_no_FR10.tiff", width = 1000, height = 600,units="px",res=120)
 ggplot(var.imp, aes(x=reorder(predictor,sort), y=avg_var_props,fill=type)) + 
   geom_bar(position="dodge", stat="identity",colour="black")+
   geom_errorbar( aes(x=predictor, ymin=avg_var_props-sd_var_props, ymax=avg_var_props+sd_var_props), width=0.4, colour="#610000", alpha=0.9, size=1)+ theme_classic()+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom",legend.background = element_rect(size=0.5, linetype="solid", 
