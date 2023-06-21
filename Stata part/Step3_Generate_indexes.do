@@ -1,5 +1,8 @@
+*Set directory
+cd /your/directory/
+
 * Use the dataset we get as output of Step2
-use "/Users/francescamicocci/Documents/Export_project/Data/Data_real_val.dta", replace
+use "Export_project/Data/Data_real_val.dta", replace
 
 *Generate id from bvdidnumber
 egen id= group(bvdidnumber)
@@ -95,4 +98,4 @@ gen export=0
 replace export=1 if exportrevenueeur>0&!missing(exportrevenueeur)
 
 * Save the output
-save "/Users/francescamicocci/Documents/Export_project/Data/Data_panel_1.dta",replace
+save "Export_project/Data/Data_panel_1.dta",replace
