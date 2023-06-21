@@ -27,10 +27,11 @@ library(reshape2)
 
 Import data
 ```{r load data}
-load('/Users/francescamicocci/Documents/Export_project/Data/data_for_ML.RData')
+setwd('/your/directory')
+load('Export_project/Data/data_for_ML.RData')
 rm(train1,train2,train3,train4,train5,test1,test2,test3,test4,test5,CART_Statistics,Logit_Statistics)
-load("/Users/francescamicocci/Documents/Export_project/Data/train1.m.RData")
-load("/Users/francescamicocci/Documents/Export_project/Data/test1.m.RData")
+load("Export_project/Data/train1.m.RData")
+load("Export_project/Data/test1.m.RData")
 ```
 
 # Annual Effects
@@ -368,93 +369,36 @@ Cart_Statistics_annual%>%
 ## SERVER!
 Save data to be used locally.
 ```{r save train test}
-save(train_2011,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2011.RData")
-save(test_2011,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2011.RData")
-save(train_2012,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2012.RData")
-save(test_2012,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2012.RData")
-save(train_2013,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2013.RData")
-save(test_2013,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2013.RData")
-save(train_2014,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2014.RData")
-save(test_2014,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2014.RData")
-save(train_2015,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2015.RData")
-save(test_2015,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2015.RData")
-save(train_2016,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2016.RData")
-save(test_2016,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2016.RData")
-save(train_2017,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2017.RData")
-save(test_2017,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2017.RData")
-save(train_2018,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2018.RData")
-save(test_2018,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2018.RData")
-save(formula.ML,file= "/Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData")
+save(train_2011,file= "Export_project/Data/train_2011.RData")
+save(test_2011,file= "Export_project/Data/test_2011.RData")
+save(train_2012,file= "Export_project/Data/train_2012.RData")
+save(test_2012,file= "Export_project/Data/test_2012.RData")
+save(train_2013,file= "Export_project/Data/train_2013.RData")
+save(test_2013,file= "Export_project/Data/test_2013.RData")
+save(train_2014,file= "Export_project/Data/train_2014.RData")
+save(test_2014,file= "Export_project/Data/test_2014.RData")
+save(train_2015,file= "Export_project/Data/train_2015.RData")
+save(test_2015,file= "Export_project/Data/test_2015.RData")
+save(train_2016,file= "Export_project/Data/train_2016.RData")
+save(test_2016,file= "Export_project/Data/test_2016.RData")
+save(train_2017,file= "Export_project/Data/train_2017.RData")
+save(test_2017,file= "Export_project/Data/test_2017.RData")
+save(train_2018,file= "Export_project/Data/train_2018.RData")
+save(test_2018,file= "Export_project/Data/test_2018.RData")
+save(formula.ML,file= "Export_project/Data/formula.ML.RData")
 ```
 
 Now open the Terminal and upload the file
 
-```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2011.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2011.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2012.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2012.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2013.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2013.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2014.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2014.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2015.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2015.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2016.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2016.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2017.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2017.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2018.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2018.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
 ## Random Forest
 ### Sample 2011
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2011.RData")
-load("/home/francesca.micocci/Export_project/test_2011.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2011.RData")
+load("/Export_project/test_2011.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -463,20 +407,16 @@ set.seed(2021)
 rf_2011 <- randomForest(formula.ML, data=train_2011, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2011 <- predict(rf_2011, test_2011,type='prob')
 fitted.prob_2011<-fitted.prob_2011[,2]
-save(fitted.prob_2011,file="/home/francesca.micocci/Export_project/fitted.prob_2011.RData")
+save(fitted.prob_2011,file="/Export_project/fitted.prob_2011.RData")
 ```
 ### Sample 2012
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2012.RData")
-load("/home/francesca.micocci/Export_project/test_2012.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2012.RData")
+load("/Export_project/test_2012.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -485,20 +425,16 @@ set.seed(2021)
 rf_2012 <- randomForest(formula.ML, data=train_2012, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2012 <- predict(rf_2012, test_2012,type='prob')
 fitted.prob_2012<-fitted.prob_2012[,2]
-save(fitted.prob_2012,file="/home/francesca.micocci/Export_project/fitted.prob_2012.RData")
+save(fitted.prob_2012,file="/Export_project/fitted.prob_2012.RData")
 ```
 ### Sample 2013
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2013.RData")
-load("/home/francesca.micocci/Export_project/test_2013.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2013.RData")
+load("/Export_project/test_2013.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -507,20 +443,16 @@ set.seed(2021)
 rf_2013 <- randomForest(formula.ML, data=train_2013, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2013 <- predict(rf_2013, test_2013,type='prob')
 fitted.prob_2013<-fitted.prob_2013[,2]
-save(fitted.prob_2013,file="/home/francesca.micocci/Export_project/fitted.prob_2013.RData")
+save(fitted.prob_2013,file="/Export_project/fitted.prob_2013.RData")
 ```
 ### Sample 2014
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2014.RData")
-load("/home/francesca.micocci/Export_project/test_2014.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2014.RData")
+load("/Export_project/test_2014.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -529,20 +461,16 @@ set.seed(2021)
 rf_2014 <- randomForest(formula.ML, data=train_2014, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2014 <- predict(rf_2014, test_2014,type='prob')
 fitted.prob_2014<-fitted.prob_2014[,2]
-save(fitted.prob_2014,file="/home/francesca.micocci/Export_project/fitted.prob_2014.RData")
+save(fitted.prob_2014,file="/Export_project/fitted.prob_2014.RData")
 ```
 ### Sample 2015
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2015.RData")
-load("/home/francesca.micocci/Export_project/test_2015.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2015.RData")
+load("/Export_project/test_2015.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -551,20 +479,16 @@ set.seed(2021)
 rf_2015 <- randomForest(formula.ML, data=train_2015, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2015 <- predict(rf_2015, test_2015,type='prob')
 fitted.prob_2015<-fitted.prob_2015[,2]
-save(fitted.prob_2015,file="/home/francesca.micocci/Export_project/fitted.prob_2015.RData")
+save(fitted.prob_2015,file="/Export_project/fitted.prob_2015.RData")
 ```
 ### Sample 2016
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2016.RData")
-load("/home/francesca.micocci/Export_project/test_2016.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2016.RData")
+load("/Export_project/test_2016.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -573,21 +497,17 @@ set.seed(2021)
 rf_2016 <- randomForest(formula.ML, data=train_2016, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2016 <- predict(rf_2016, test_2016,type='prob')
 fitted.prob_2016<-fitted.prob_2016[,2]
-save(fitted.prob_2016,file="/home/francesca.micocci/Export_project/fitted.prob_2016.RData")
+save(fitted.prob_2016,file="/Export_project/fitted.prob_2016.RData")
 ```
 
 ### Sample 2017
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2017.RData")
-load("/home/francesca.micocci/Export_project/test_2017.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2017.RData")
+load("/Export_project/test_2017.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -596,20 +516,16 @@ set.seed(2021)
 rf_2017 <- randomForest(formula.ML, data=train_2017, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2017 <- predict(rf_2017, test_2017,type='prob')
 fitted.prob_2017<-fitted.prob_2017[,2]
-save(fitted.prob_2017,file="/home/francesca.micocci/Export_project/fitted.prob_2017.RData")
+save(fitted.prob_2017,file="/Export_project/fitted.prob_2017.RData")
 ```
 ### Sample 2018
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2018.RData")
-load("/home/francesca.micocci/Export_project/test_2018.RData")
-load("/home/francesca.micocci/Export_project/formula.ML.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2018.RData")
+load("/Export_project/test_2018.RData")
+load("/Export_project/formula.ML.RData")
 ```
 Compute the model
 ```{}
@@ -618,37 +534,19 @@ set.seed(2021)
 rf_2018 <- randomForest(formula.ML, data=train_2018, importance=TRUE, ntree = 300, mtry = 7)
 fitted.prob_2018 <- predict(rf_2018, test_2018,type='prob')
 fitted.prob_2018<-fitted.prob_2018[,2]
-save(fitted.prob_2018,file="/home/francesca.micocci/Export_project/fitted.prob_2018.RData")
+save(fitted.prob_2018,file="/Export_project/fitted.prob_2018.RData")
 ```
-Download the results locally
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2011.RData /Users/francescamicocci/Documents/Server/fitted.prob_2011.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2012.RData /Users/francescamicocci/Documents/Server/fitted.prob_2012.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2013.RData /Users/francescamicocci/Documents/Server/fitted.prob_2013.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2014.RData /Users/francescamicocci/Documents/Server/fitted.prob_2014.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2015.RData /Users/francescamicocci/Documents/Server/fitted.prob_2015.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2016.RData /Users/francescamicocci/Documents/Server/fitted.prob_2016.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2017.RData /Users/francescamicocci/Documents/Server/fitted.prob_2017.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2018.RData /Users/francescamicocci/Documents/Server/fitted.prob_2018.RData
-KQyVZQ9v3uL
-```
-Load the predictions
+Download the results locally and Load the predictions
 ```{r load prob_predictions RF}
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2011.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2012.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2013.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2014.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2015.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2016.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2017.RData")
-load("/Users/francescamicocci/Documents/Server/fitted.prob_2018.RData")
+setwd('/your/directory/')
+load("Server/fitted.prob_2011.RData")
+load("Server/fitted.prob_2012.RData")
+load("Server/fitted.prob_2013.RData")
+load("Server/fitted.prob_2014.RData")
+load("Server/fitted.prob_2015.RData")
+load("Server/fitted.prob_2016.RData")
+load("Server/fitted.prob_2017.RData")
+load("Server/fitted.prob_2018.RData")
 ```
 Generate the predictions
 
@@ -822,16 +720,12 @@ RF_Statistics_annual%>%
 
 ## BART
 ### Sample 2011
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2011.RData")
-load("/home/francesca.micocci/Export_project/test_2011.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2011.RData")
+load("/Export_project/test_2011.RData")
 ```
 
 Run the Algorithm
@@ -859,20 +753,16 @@ test_2011$rf.prob<-NULL
 test_2011$rf.pred<-NULL
 
 bart_machine.fitted_2011<-predict(bart_machine, test_2011,type="prob")
-save(bart_machine.fitted_2011,file="/home/francesca.micocci/Export_project/bart.fitted_2011.RData")
+save(bart_machine.fitted_2011,file="/Export_project/bart.fitted_2011.RData")
 
 ```
 ### Sample 2012
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2012.RData")
-load("/home/francesca.micocci/Export_project/test_2012.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2012.RData")
+load("/Export_project/test_2012.RData")
 ```
 
 Run the Algorithm
@@ -900,20 +790,16 @@ test_2012$rf.prob<-NULL
 test_2012$rf.pred<-NULL
 
 bart_machine.fitted_2012<-predict(bart_machine, test_2012,type="prob")
-save(bart_machine.fitted_2012,file="/home/francesca.micocci/Export_project/bart.fitted_2012.RData")
+save(bart_machine.fitted_2012,file="/Export_project/bart.fitted_2012.RData")
 
 ```
 ### Sample 2013
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2013.RData")
-load("/home/francesca.micocci/Export_project/test_2013.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2013.RData")
+load("/Export_project/test_2013.RData")
 ```
 
 Run the Algorithm
@@ -941,20 +827,16 @@ test_2013$rf.prob<-NULL
 test_2013$rf.pred<-NULL
 
 bart_machine.fitted_2013<-predict(bart_machine, test_2013,type="prob")
-save(bart_machine.fitted_2013,file="/home/francesca.micocci/Export_project/bart.fitted_2013.RData")
+save(bart_machine.fitted_2013,file="/Export_project/bart.fitted_2013.RData")
 
 ```
 ### Sample 2014
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2014.RData")
-load("/home/francesca.micocci/Export_project/test_2014.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2014.RData")
+load("/Export_project/test_2014.RData")
 ```
 
 Run the Algorithm
@@ -982,20 +864,16 @@ test_2014$rf.prob<-NULL
 test_2014$rf.pred<-NULL
 
 bart_machine.fitted_2014<-predict(bart_machine, test_2014,type="prob")
-save(bart_machine.fitted_2014,file="/home/francesca.micocci/Export_project/bart.fitted_2014.RData")
+save(bart_machine.fitted_2014,file="/Export_project/bart.fitted_2014.RData")
 
 ```
 ### Sample 2015
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2015.RData")
-load("/home/francesca.micocci/Export_project/test_2015.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2015.RData")
+load("/Export_project/test_2015.RData")
 ```
 
 Run the Algorithm
@@ -1023,20 +901,16 @@ test_2015$rf.prob<-NULL
 test_2015$rf.pred<-NULL
 
 bart_machine.fitted_2015<-predict(bart_machine, test_2015,type="prob")
-save(bart_machine.fitted_2015,file="/home/francesca.micocci/Export_project/bart.fitted_2015.RData")
+save(bart_machine.fitted_2015,file="/Export_project/bart.fitted_2015.RData")
 
 ```
 ### Sample 2016
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2016.RData")
-load("/home/francesca.micocci/Export_project/test_2016.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2016.RData")
+load("/Export_project/test_2016.RData")
 ```
 
 Run the Algorithm
@@ -1064,20 +938,16 @@ test_2016$rf.prob<-NULL
 test_2016$rf.pred<-NULL
 
 bart_machine.fitted_2016<-predict(bart_machine, test_2016,type="prob")
-save(bart_machine.fitted_2016,file="/home/francesca.micocci/Export_project/bart.fitted_2016.RData")
+save(bart_machine.fitted_2016,file="/Export_project/bart.fitted_2016.RData")
 
 ```
 ### Sample 2017
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2017.RData")
-load("/home/francesca.micocci/Export_project/test_2017.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2017.RData")
+load("/Export_project/test_2017.RData")
 ```
 
 Run the Algorithm
@@ -1105,20 +975,16 @@ test_2017$rf.prob<-NULL
 test_2017$rf.pred<-NULL
 
 bart_machine.fitted_2017<-predict(bart_machine, test_2017,type="prob")
-save(bart_machine.fitted_2017,file="/home/francesca.micocci/Export_project/bart.fitted_2017.RData")
+save(bart_machine.fitted_2017,file="/Export_project/bart.fitted_2017.RData")
 
 ```
 ### Sample 2018
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
-load("/home/francesca.micocci/Export_project/train_2018.RData")
-load("/home/francesca.micocci/Export_project/test_2018.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2018.RData")
+load("/Export_project/test_2018.RData")
 ```
 
 Run the Algorithm
@@ -1146,41 +1012,23 @@ test_2018$rf.prob<-NULL
 test_2018$rf.pred<-NULL
 
 bart_machine.fitted_2018<-predict(bart_machine, test_2018,type="prob")
-save(bart_machine.fitted_2018,file="/home/francesca.micocci/Export_project/bart.fitted_2018.RData")
+save(bart_machine.fitted_2018,file="/Export_project/bart.fitted_2018.RData")
 
 ```
 ### Download predictions
 Close R and Terminal. Then Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2011.RData /Users/francescamicocci/Documents/Server/bart.fitted_2011.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2012.RData /Users/francescamicocci/Documents/Server/bart.fitted_2012.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2013.RData /Users/francescamicocci/Documents/Server/bart.fitted_2013.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2014.RData /Users/francescamicocci/Documents/Server/bart.fitted_2014.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2015.RData /Users/francescamicocci/Documents/Server/bart.fitted_2015.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2016.RData /Users/francescamicocci/Documents/Server/bart.fitted_2016.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2017.RData /Users/francescamicocci/Documents/Server/bart.fitted_2017.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2018.RData /Users/francescamicocci/Documents/Server/bart.fitted_2018.RData
-KQyVZQ9v3uL
-```
-
 ### Evaluate BART
 Now proceed with the predictions based on BART.
 ```{r load pred prob BART}
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2011.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2012.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2013.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2014.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2015.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2016.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2017.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2018.RData")
+setwd('/your/directory/')
+load("Server/bart.fitted_2011.RData")
+load("Server/bart.fitted_2012.RData")
+load("Server/bart.fitted_2013.RData")
+load("Server/bart.fitted_2014.RData")
+load("Server/bart.fitted_2015.RData")
+load("Server/bart.fitted_2016.RData")
+load("Server/bart.fitted_2017.RData")
+load("Server/bart.fitted_2018.RData")
 
 test_2011$bart.prob<-(bart_machine.fitted_2011)
 test_2012$bart.prob<-(bart_machine.fitted_2012)
@@ -1395,85 +1243,33 @@ rm(training_firms_2011,training_firms_2012,training_firms_2013,training_firms_20
 ### Server
 Save the datasets locally
 ```{r save train test NA}
-save(train_2011.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2011.m.RData")
-save(train_2012.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2012.m.RData")
-save(train_2013.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2013.m.RData")
-save(train_2014.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2014.m.RData")
-save(train_2015.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2015.m.RData")
-save(train_2016.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2016.m.RData")
-save(train_2017.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2017.m.RData")
-save(train_2018.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2018.m.RData")
-save(test_2011.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2011.m.RData")
-save(test_2012.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2012.m.RData")
-save(test_2013.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2013.m.RData")
-save(test_2014.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2014.m.RData")
-save(test_2015.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2015.m.RData")
-save(test_2016.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2016.m.RData")
-save(test_2017.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2017.m.RData")
-save(test_2018.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2018.m.RData")
+save(train_2011.m,file="Export_project/Data/train_2011.m.RData")
+save(train_2012.m,file="Export_project/Data/train_2012.m.RData")
+save(train_2013.m,file="Export_project/Data/train_2013.m.RData")
+save(train_2014.m,file="Export_project/Data/train_2014.m.RData")
+save(train_2015.m,file="Export_project/Data/train_2015.m.RData")
+save(train_2016.m,file="Export_project/Data/train_2016.m.RData")
+save(train_2017.m,file="Export_project/Data/train_2017.m.RData")
+save(train_2018.m,file="Export_project/Data/train_2018.m.RData")
+save(test_2011.m,file="Export_project/Data/test_2011.m.RData")
+save(test_2012.m,file="Export_project/Data/test_2012.m.RData")
+save(test_2013.m,file="Export_project/Data/test_2013.m.RData")
+save(test_2014.m,file="Export_project/Data/test_2014.m.RData")
+save(test_2015.m,file="Export_project/Data/test_2015.m.RData")
+save(test_2016.m,file="Export_project/Data/test_2016.m.RData")
+save(test_2017.m,file="Export_project/Data/test_2017.m.RData")
+save(test_2018.m,file="Export_project/Data/test_2018.m.RData")
 ```
 Upload the files on server
-```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2011.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
 
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2011.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2012.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2012.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2013.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2013.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2014.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2014.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2015.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2015.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2016.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2016.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2017.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2017.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/train_2018.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test_2018.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
 ### Sample 2011
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2011
 R
-load("/home/francesca.micocci/Export_project/train_2011.m.RData")
-load("/home/francesca.micocci/Export_project/test_2011.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2011.m.RData")
+load("/Export_project/test_2011.m.RData")
 ```
 
 Run the Algorithm
@@ -1496,21 +1292,17 @@ test_2011.m$bvdidnumber<-NULL
 test_2011.m$year<-NULL
 
 bart_machine.fitted_2011.m<-predict(bart_machine.m, test_2011.m,type="prob")
-save(bart_machine.fitted_2011.m,file="/home/francesca.micocci/Export_project/bart.fitted_2011.m.RData")
+save(bart_machine.fitted_2011.m,file="/Export_project/bart.fitted_2011.m.RData")
 
 ```
 ### Sample 2012
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2012
 R
-load("/home/francesca.micocci/Export_project/train_2012.m.RData")
-load("/home/francesca.micocci/Export_project/test_2012.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2012.m.RData")
+load("/Export_project/test_2012.m.RData")
 ```
 
 Run the Algorithm
@@ -1533,21 +1325,17 @@ test_2012.m$bvdidnumber<-NULL
 test_2012.m$year<-NULL
 
 bart_machine.fitted_2012.m<-predict(bart_machine.m, test_2012.m,type="prob")
-save(bart_machine.fitted_2012.m,file="/home/francesca.micocci/Export_project/bart.fitted_2012.m.RData")
+save(bart_machine.fitted_2012.m,file="/Export_project/bart.fitted_2012.m.RData")
 
 ```
 ### Sample 2013
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2013
 R
-load("/home/francesca.micocci/Export_project/train_2013.m.RData")
-load("/home/francesca.micocci/Export_project/test_2013.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2013.m.RData")
+load("/Export_project/test_2013.m.RData")
 ```
 
 Run the Algorithm
@@ -1570,21 +1358,17 @@ test_2013.m$bvdidnumber<-NULL
 test_2013.m$year<-NULL
 
 bart_machine.fitted_2013.m<-predict(bart_machine.m, test_2013.m,type="prob")
-save(bart_machine.fitted_2013.m,file="/home/francesca.micocci/Export_project/bart.fitted_2013.m.RData")
+save(bart_machine.fitted_2013.m,file="/Export_project/bart.fitted_2013.m.RData")
 
 ```
 ### Sample 2014
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2014
 R
-load("/home/francesca.micocci/Export_project/train_2014.m.RData")
-load("/home/francesca.micocci/Export_project/test_2014.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2014.m.RData")
+load("/Export_project/test_2014.m.RData")
 ```
 
 Run the Algorithm
@@ -1607,21 +1391,17 @@ test_2014.m$bvdidnumber<-NULL
 test_2014.m$year<-NULL
 
 bart_machine.fitted_2014.m<-predict(bart_machine.m, test_2014.m,type="prob")
-save(bart_machine.fitted_2014.m,file="/home/francesca.micocci/Export_project/bart.fitted_2014.m.RData")
+save(bart_machine.fitted_2014.m,file="/Export_project/bart.fitted_2014.m.RData")
 
 ```
 ### Sample 2015
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2015
 R
-load("/home/francesca.micocci/Export_project/train_2015.m.RData")
-load("/home/francesca.micocci/Export_project/test_2015.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2015.m.RData")
+load("/Export_project/test_2015.m.RData")
 ```
 
 Run the Algorithm
@@ -1644,21 +1424,17 @@ test_2015.m$bvdidnumber<-NULL
 test_2015.m$year<-NULL
 
 bart_machine.fitted_2015.m<-predict(bart_machine.m, test_2015.m,type="prob")
-save(bart_machine.fitted_2015.m,file="/home/francesca.micocci/Export_project/bart.fitted_2015.m.RData")
+save(bart_machine.fitted_2015.m,file="/Export_project/bart.fitted_2015.m.RData")
 
 ```
 ### Sample 2016
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2016
 R
-load("/home/francesca.micocci/Export_project/train_2016.m.RData")
-load("/home/francesca.micocci/Export_project/test_2016.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2016.m.RData")
+load("/Export_project/test_2016.m.RData")
 ```
 
 Run the Algorithm
@@ -1681,21 +1457,17 @@ test_2016.m$bvdidnumber<-NULL
 test_2016.m$year<-NULL
 
 bart_machine.fitted_2016.m<-predict(bart_machine.m, test_2016.m,type="prob")
-save(bart_machine.fitted_2016.m,file="/home/francesca.micocci/Export_project/bart.fitted_2016.m.RData")
+save(bart_machine.fitted_2016.m,file="/Export_project/bart.fitted_2016.m.RData")
 
 ```
 ### Sample 2017
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2017
 R
-load("/home/francesca.micocci/Export_project/train_2017.m.RData")
-load("/home/francesca.micocci/Export_project/test_2017.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2017.m.RData")
+load("/Export_project/test_2017.m.RData")
 ```
 
 Run the Algorithm
@@ -1718,20 +1490,16 @@ test_2017.m$bvdidnumber<-NULL
 test_2017.m$year<-NULL
 
 bart_machine.fitted_2017.m<-predict(bart_machine.m, test_2017.m,type="prob")
-save(bart_machine.fitted_2017.m,file="/home/francesca.micocci/Export_project/bart.fitted_2017.m.RData")
+save(bart_machine.fitted_2017.m,file="/Export_project/bart.fitted_2017.m.RData")
 ```
 ### Sample 2018
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_2018
 R
-load("/home/francesca.micocci/Export_project/train_2018.m.RData")
-load("/home/francesca.micocci/Export_project/test_2018.m.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train_2018.m.RData")
+load("/Export_project/test_2018.m.RData")
 ```
 
 Run the Algorithm
@@ -1754,39 +1522,22 @@ test_2018.m$bvdidnumber<-NULL
 test_2018.m$year<-NULL
 
 bart_machine.fitted_2018.m<-predict(bart_machine.m, test_2018.m,type="prob")
-save(bart_machine.fitted_2018.m,file="/home/francesca.micocci/Export_project/bart.fitted_2018.m.RData")
+save(bart_machine.fitted_2018.m,file="/Export_project/bart.fitted_2018.m.RData")
 
 ```
 ### Download predictions
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2011.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2011.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2012.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2012.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2013.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2013.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2014.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2014.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2015.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2015.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2016.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2016.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2017.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2017.m.RData
-KQyVZQ9v3uL
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2018.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2018.m.RData
-KQyVZQ9v3uL
-```
+
 ### Evaluate BART-MIA
 Now proceed with the predictions based on BART-MIA.
 ```{r load pred prob BART-MIA}
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2011.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2012.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2013.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2014.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2015.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2016.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2017.m.RData")
-load("/Users/francescamicocci/Documents/Server/bart.fitted_2018.m.RData")
+load("Server/bart.fitted_2011.m.RData")
+load("Server/bart.fitted_2012.m.RData")
+load("Server/bart.fitted_2013.m.RData")
+load("Server/bart.fitted_2014.m.RData")
+load("Server/bart.fitted_2015.m.RData")
+load("Server/bart.fitted_2016.m.RData")
+load("Server/bart.fitted_2017.m.RData")
+load("Server/bart.fitted_2018.m.RData")
 
 test_2011.m$bart.mia.prob<-(bart_machine.fitted_2011.m)
 test_2012.m$bart.mia.prob<-(bart_machine.fitted_2012.m)
@@ -2038,30 +1789,18 @@ rm(cm_cart_predictors)
 Note that for predictions from Random Forest we need to have no NA in the test-set. Therefoere, we create subsets of the train and test sets with no NA and we use them to train and test the algorithm
 ```{r save files}
 formula.ML.lasso2<-(as.formula(paste("as.factor(export) ~", paste(beta, collapse="+")))) 
-save(formula.ML.lasso2,file="/Users/francescamicocci/Documents/Export_project/Data/formula.lasso2.RData")
-save(train.lasso,file="/Users/francescamicocci/Documents/Export_project/Data/train.lasso.RData")
-save(test.lasso,file="/Users/francescamicocci/Documents/Export_project/Data/test.lasso.RData")
+save(formula.ML.lasso2,file="Export_project/Data/formula.lasso2.RData")
+save(train.lasso,file="Export_project/Data/train.lasso.RData")
+save(test.lasso,file="Export_project/Data/test.lasso.RData")
 ```
 Upload files on the server
-```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train.lasso.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test.lasso.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/formula.lasso2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
 Run the model
 ```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
 R
-load('/home/francesca.micocci/Export_project/train.lasso.RData')
-load('/home/francesca.micocci/Export_project/test.lasso.RData')
-load('/home/francesca.micocci/Export_project/formula.lasso2.RData')
+setwd('/your/directory/server/')
+load('/Export_project/train.lasso.RData')
+load('/Export_project/test.lasso.RData')
+load('/Export_project/formula.lasso2.RData')
 
 library('randomForest')
 train.lasso.nona<-na.omit(train.lasso)
@@ -2071,16 +1810,11 @@ rf.lasso<- randomForest(formula.ML.lasso2, data=train.lasso.nona, importance=TRU
 test.lasso.nona<-na.omit(test.lasso)
 rf.fitted.prob.lasso <- predict(rf.lasso, test.lasso.nona,type='prob')
 rf.fitted.prob.lasso<-rf.fitted.prob.lasso[,2]
-save(rf.fitted.prob.lasso,file='/home/francesca.micocci/Export_project/rf.fitted.lasso.RData')
+save(rf.fitted.prob.lasso,file='/Export_project/rf.fitted.lasso.RData')
 ```
-Download the predicted outcomes
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.lasso.RData /Users/francescamicocci/Documents/Server/rf.fitted.lasso.RData
-KQyVZQ9v3uL
-```
-load the data
+Download the predicted outcomes and load the data locally
 ```{r load prd RF lasso}
-load('/Users/francescamicocci/Documents/Server/rf.fitted.lasso.RData')
+load('Server/rf.fitted.lasso.RData')
 ```
 Evaluate the model
 ```{r CM RF lasso}
@@ -2102,17 +1836,13 @@ rm(cm_rf_predictors,roc_rf_predictors,pr_rf_predictors)
 ```
 
 ## BART
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 R
 rm(list=ls())
-load("/home/francesca.micocci/Export_project/train.lasso.RData")
-load("/home/francesca.micocci/Export_project/test.lasso.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train.lasso.RData")
+load("/Export_project/test.lasso.RData")
 ```
 
 Run the Algorithm
@@ -2138,16 +1868,11 @@ test$year<-NULL
 test$rpart<-NULL
 
 bart_machine.fitted.lasso<-predict(bart_machine, test,type="prob")
-save(bart_machine.fitted.lasso,file="/home/francesca.micocci/Export_project/bart.fitted.lasso.RData")
+save(bart_machine.fitted.lasso,file="/Export_project/bart.fitted.lasso.RData")
 ```
-Download the results
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.lasso.RData /Users/francescamicocci/Documents/Server/bart.fitted.lasso.RData
-KQyVZQ9v3uL
-```
-Evaluate the results: load the data
+Download the results and Evaluate the results: load the data
 ```{r load prd BART lasso}
-load('/Users/francescamicocci/Documents/Server/bart.fitted.lasso.RData')
+load('Server/bart.fitted.lasso.RData')
 ```
 Perform the analysis
 ```{r gen pred BART lasso}
@@ -2171,18 +1896,14 @@ rm(cm_bart_predictors,roc_bart_predictors,pr_bart_predictors)
 
 ```
 ## BART-MIA
-Enter the server
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-```
-Open R and load the data
+Enter the server, Open R and load the data
 ```{}
 tmux new -s bart_mia_lasso
 R
 rm(list=ls())
-load("/home/francesca.micocci/Export_project/train.lasso.RData")
-load("/home/francesca.micocci/Export_project/test.lasso.RData")
+setwd('/your/directory/server/')
+load("/Export_project/train.lasso.RData")
+load("/Export_project/test.lasso.RData")
 ```
 
 Run the Algorithm
@@ -2205,16 +1926,11 @@ test.lasso$bvdidnumber<-NULL
 test.lasso$year<-NULL
 
 bart_machine.fitted.lasso.m<-predict(bart_machine.m, test.lasso,type="prob")
-save(bart_machine.fitted.lasso.m,file="/home/francesca.micocci/Export_project/bart.mia.fitted.lasso.RData")
+save(bart_machine.fitted.lasso.m,file="/Export_project/bart.mia.fitted.lasso.RData")
 ```
-Download the results
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.mia.fitted.lasso.RData /Users/francescamicocci/Documents/Server/bart.mia.fitted.lasso.RData
-KQyVZQ9v3uL
-```
-Load the data
+Download the results and Load the data locally
 ```{r load pred BART_MIA lasso}
-load('/Users/francescamicocci/Documents/Server/bart.mia.lasso.RData')
+load('Server/bart.mia.lasso.RData')
 ```
 Perform the analysis
 ```{r gen pred BART-MIA lasso}
@@ -2260,7 +1976,6 @@ Remove useless
 rm(lasso,beta,beta2)
 ```
 
-
 # Export Share
 
 Define the export share as share of export revenues over operating revenues turnover. Since you might have strange results due to:
@@ -2301,30 +2016,18 @@ Export the training data to be used. Upload it on terminal. Proceed with the alg
 
 Save data to be used locally.
 ```{r upload train test 1pct}
-save(train.s,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s.RData")
-save(test.s,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s.RData")
+save(train.s,file= "Export_project/Data/train.s.RData")
+save(test.s,file= "Export_project/Data/test.s.RData")
 ```
 **SERVER**
-Now open the Terminal and upload the file
-
+Now open the Terminal and upload the file. Then run the BART-MIA
 ```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train.s.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test.s.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
-Run the BART-MIA
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new-session -s bart_mia_s1
 R
 rm(list=ls())
-load('/home/francesca.micocci/Export_project/test.s.RData')
-load('/home/francesca.micocci/Export_project/train.s.RData')
+setwd('/your/directory/server/')
+load('/Export_project/test.s.RData')
+load('/Export_project/train.s.RData')
 
 library(rJava)
 options(java.parameters="-Xmx50g")
@@ -2339,21 +2042,14 @@ test.s$bvdidnumber<-NULL
 test.s$export<-NULL
 test.s$year<-NULL
 bart.fitted.s<-predict(bart_machine.s, test.s,type="prob")
-save(bart.fitted.s,file="/home/francesca.micocci/Export_project/bart.fitted.s.RData")
+save(bart.fitted.s,file="/Export_project/bart.fitted.s.RData")
 
 ```
 
-Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s.RData /Users/francescamicocci/Documents/Server/bart.fitted.s.RData
-KQyVZQ9v3uL
-```
-
-Now proceed with the predictions based on BART.
+Download the results on local and proceed with the predictions based on BART.
 ```{r load results 1pct}
-load("/Users/francescamicocci/Documents/Server/bart.fitted.s.RData")
+load("Server/bart.fitted.s.RData")
 ```
-
 
 ## 2st Percentile
 
@@ -2386,30 +2082,18 @@ Export the training data to be used. Upload it on terminal. Proceed with the alg
 
 Save data to be used locally.
 ```{r upload 2pct}
-save(train.s2,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s2.RData")
-save(test.s2,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s2.RData")
+save(train.s2,file= "Export_project/Data/train.s2.RData")
+save(test.s2,file= "Export_project/Data/test.s2.RData")
 ```
 **SERVER!**
-Now open the Terminal and upload the file
-
+Now open the Terminal and upload the file. The, Run the BART-MIA
 ```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train.s2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test.s2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
-Run the BART-MIA
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new-session -s bart_mia_s2
 R
 rm(list=ls())
-load('/home/francesca.micocci/Export_project/test.s2.RData')
-load('/home/francesca.micocci/Export_project/train.s2.RData')
+setwd('/your/directory/server/')
+load('/Export_project/test.s2.RData')
+load('/Export_project/train.s2.RData')
 
 library(rJava)
 options(java.parameters="-Xmx50g")
@@ -2424,18 +2108,12 @@ test.s2$bvdidnumber<-NULL
 test.s2$export<-NULL
 test.s2$year<-NULL
 bart.fitted.s2<-predict(bart_machine.s, test.s2,type="prob")
-save(bart.fitted.s2,file="/home/francesca.micocci/Export_project/bart.fitted.s2.RData")
+save(bart.fitted.s2,file="/Export_project/bart.fitted.s2.RData")
 
 ```
-Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s2.RData /Users/francescamicocci/Documents/Server/bart.fitted.s2.RData
-KQyVZQ9v3uL
-```
-
-Now proceed with the predictions based on BART.
+Download the results on local and proceed with the predictions based on BART.
 ```{r load results 2pct}
-load("/Users/francescamicocci/Documents/Server/bart.fitted.s2.RData")
+load("Server/bart.fitted.s2.RData")
 ```
 
 ## 5st Percentile
@@ -2469,30 +2147,18 @@ Export the training data to be used. Upload it on terminal. Proceed with the alg
 
 Save data to be used locally.
 ```{r upload 5 pct}
-save(train.s5,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s5.RData")
-save(test.s5,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s5.RData")
+save(train.s5,file= "Export_project/Data/train.s5.RData")
+save(test.s5,file= "Export_project/Data/test.s5.RData")
 ```
 **SERVER**
-Now open the Terminal and upload the file
-
+Now open the Terminal and upload the file and run the BART-MIA
 ```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train.s5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test.s5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
-Run the BART-MIA
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new-session -s bart_mia_s5
 R
 rm(list=ls())
-load('/home/francesca.micocci/Export_project/test.s5.RData')
-load('/home/francesca.micocci/Export_project/train.s5.RData')
+setwd('/your/directory/server/')
+load('/Export_project/test.s5.RData')
+load('/Export_project/train.s5.RData')
 
 library(rJava)
 options(java.parameters="-Xmx50g")
@@ -2507,18 +2173,12 @@ test.s5$bvdidnumber<-NULL
 test.s5$export<-NULL
 test.s5$year<-NULL
 bart.fitted.s5<-predict(bart_machine.s, test.s5,type="prob")
-save(bart.fitted.s5,file="/home/francesca.micocci/Export_project/bart.fitted.s5.RData")
+save(bart.fitted.s5,file="/Export_project/bart.fitted.s5.RData")
 
 ```
-Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s5.RData /Users/francescamicocci/Documents/Server/bart.fitted.s5.RData
-KQyVZQ9v3uL
-```
-
-Now proceed with the predictions based on BART.
+Download the results on local and proceed with the predictions based on BART.
 ```{r load results 5 pct}
-load("/Users/francescamicocci/Documents/Server/bart.fitted.s5.RData")
+load("Server/bart.fitted.s5.RData")
 ```
 ## 10th Percentile
 
@@ -2551,29 +2211,17 @@ Export the training data to be used. Upload it on terminal. Proceed with the alg
 
 Save data to be used locally.
 ```{r upload 10pct}
-save(train.s10,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s10.RData")
-save(test.s10,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s10.RData")
+save(train.s10,file= "Export_project/Data/train.s10.RData")
+save(test.s10,file= "Export_project/Data/test.s10.RData")
 ```
 **SERVER**
-Now open the Terminal and upload the file
-
+Now open the Terminal and upload the file. The run the BART-MIA
 ```{}
-scp /Users/francescamicocci/Documents/Export_project/Data/train.s10.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-
-scp /Users/francescamicocci/Documents/Export_project/Data/test.s10.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
-KQyVZQ9v3uL
-```
-
-Run the BART-MIA
-```{}
-ssh francesca.micocci@10.181.100.119
-KQyVZQ9v3uL
-
 tmux new-session -s bart_mia_s10
 R
-load('home/francesca.micocci/Export_project/test.s10.RData')
-load('home/francesca.micocci/Export_project/train.s10.RData')
+setwd('/your/directory/server/')
+load('Export_project/test.s10.RData')
+load('Export_project/train.s10.RData')
 
 library(rJava)
 options(java.parameters="-Xmx50g")
@@ -2588,18 +2236,12 @@ test.s10$bvdidnumber<-NULL
 test.s10$export<-NULL
 test.s10$year<-NULL
 bart.fitted.s10<-predict(bart_machine.s, test.s10,type="prob")
-save(bart.fitted.s10,file="/home/francesca.micocci/Export_project/bart.fitted.s10.RData")
+save(bart.fitted.s10,file="/Export_project/bart.fitted.s10.RData")
 
 ```
-Download the results on local
-```{}
-scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s10.RData /Users/francescamicocci/Documents/Server/bart.fitted.s10.RData
-KQyVZQ9v3uL
-```
-
-Now proceed with the predictions based on BART.
+Download the results on local and proceed with the predictions based on BART.
 ```{r load results 10pct}
-load("/Users/francescamicocci/Documents/Server/bart.fitted.s10.RData")
+load("Server/bart.fitted.s10.RData")
 ```
 
 ## Put them together 
@@ -2805,7 +2447,7 @@ Bart_MIA_Statistics.s%>%
 Generate Sensitivity and Specificity at different probability thresholds
 ```{r}
 rm(list=ls())
-load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
+load("Export_project/Data/results.RData")
 
 cutoffs<-data.frame(matrix(vector(), 99, 3,
                 dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
