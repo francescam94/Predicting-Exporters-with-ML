@@ -1,5 +1,7 @@
+*Set directory
+cd /your/directory/
 * Import the dta dataset generated as output of Step1
-use "/Users/francescamicocci/Documents/Export_project/Data/Data_from_string.dta", replace
+use "Export_project/Data/Data_from_string.dta", replace
 
 *Extract the year from the date
 gen year_status=substr(statusdate, 7, 10)
@@ -44,8 +46,8 @@ gen wage_pi2017=102.8
 gen wage_pi2018=104.9
 gen wage_pi2019=107.5
 
-*Merge the original dataset with new variables 
-merge m:m bvdidnumber using "/Users/francescamicocci/Documents/Export_project/Data/new_var.dta"
+*Merge the original dataset with new variables on FDI
+merge m:m bvdidnumber using "Export_project/Data/new_var.dta"
 
 
 *Transform the data into a panel
@@ -57,7 +59,7 @@ reshape long `mylist', i(bvdidnumber) j(year) string
 tostring nacerev2primarycodes, replace
 drop _merge
 
-merge m:m year nacerev2primarycodes using "/Users/francescamicocci/Documents/Export_project/Data/PPI.dta"
+merge m:m year nacerev2primarycodes using "Export_project/Data/PPI.dta"
 *Perform some data cleaning
 rename Value PPI 
 drop if bvdidnumber==""
@@ -112,5 +114,5 @@ label var l "log of real cost of labour"
 
 drop rCapital rMaterials rAddVal rSales ÿþ interm_pi capital_pi wage_pi PPI wagebill
 
-save "/Users/francescamicocci/Documents/Export_project/Data/Data_real_val.dta", replace
+save "Export_project/Data/Data_real_val.dta", replace
 
