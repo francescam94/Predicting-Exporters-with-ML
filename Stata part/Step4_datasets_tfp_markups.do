@@ -2,7 +2,7 @@
 clear all
 
 *set directory 
-cd /your/directory/
+cd "/your/directory/"
 
 *Generate a global of nace codes to be used for TFP and Markups computation
 global naces 10 11 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 
