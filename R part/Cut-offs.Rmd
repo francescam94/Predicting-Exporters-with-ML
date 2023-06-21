@@ -28,8 +28,9 @@ Generate Sensitivity and Specificity at different probability thresholds. Then s
 
 ```{r upload files}
 rm(list=ls())
-load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
-load("/Users/francescamicocci/Documents/Export_project/Data/results_no_na.RData")
+setwd('/your/directory/')
+load("Export_project/Data/results.RData")
+load("Export_project/Data/results_no_na.RData")
 ```
 
 2. Merge the prediction results in a single dataset
@@ -168,14 +169,14 @@ ggplot(logit,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(
 
 Now export the data with the predicted probabilities of the algorithms,to be used in stata to compute the optimal cut-off for export status prediction.
 ```{r export data}
-write.dta(final, "/Users/francescamicocci/Documents/Export_project/Data/final.dta")
+write.dta(final, "Export_project/Data/final.dta")
 ```
 
 Use the cutoffs obtained in Stata to predict the export status of firms. Note that we will have a different optimal cutoff for each different algorithm. This kind of approach is useful to evaluate the final performance of the models. Note indeed, that the displayed Sensitivity and Specificity are the optimal ones for each model and this allows to compare such statistics across models.
 
 ```{r import cutoffs}
 #Upload the data
-final<-haven::read_dta("/Users/francescamicocci/Documents/Export_project/Data/final_cutoffs.dta")
+final<-haven::read_dta("Export_project/Data/final_cutoffs.dta")
 #generate the datasets of the performance statisatics
 Stats_cutoff<-data.frame(matrix(vector(), 5, 7,
                 dimnames=list(c(), c("Model","Sensitivity","Specificity","Balanced Accuracy","ROC","PR","Optimal Cut-off"))),
@@ -490,7 +491,7 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 plot.list=list(logit,roc.logit,pr.logit,lasso,roc.lasso,pr.lasso,RF,roc.RF,pr.RF,BART,roc.BART,pr.BART,BART_MIA,roc.BART_MIA,pr.BART_MIA)
-tiff(filename="/Users/francescamicocci/Desktop/tiff_pic/ROC_PR.tiff",units="px",width=1400, height=2000)
+tiff(filename="tiff_pic/ROC_PR.tiff",units="px",width=1400, height=2000)
 ggarrange(plotlist = plot.list,ncol = 3,
   nrow = 5,widths = c(0.3, 1,1))
 dev.off()
