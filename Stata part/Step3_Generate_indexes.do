@@ -1,5 +1,5 @@
 *Set directory
-cd /your/directory/
+cd "/your/directory/"
 
 * Use the dataset we get as output of Step2
 use "Export_project/Data/Data_real_val.dta", replace
