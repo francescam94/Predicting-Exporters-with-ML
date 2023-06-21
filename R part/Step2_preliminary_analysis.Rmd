@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 require("knitr")
-knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+knitr::opts_knit$set(root.dir ='/your/directory/Export_project/Data/')
 ```
 
 
@@ -28,7 +28,8 @@ library(grid)
 Import data obtained as output of Step1 on R
 
 ```{r}
-load('/Users/francescamicocci/Documents/Export_project/Data/data_R.RData')
+setwd('your/directory/')
+load('Export_project/Data/data_R.RData')
 ```
 # Persistency of exporting activity
 
@@ -193,14 +194,14 @@ corrplot(res, tl.pos = "td", tl.cex = 0.7, method = "ellipse", type = "upper",tl
 grid.echo()
 P1 <- grid.grab()
 #Generate the final picture
-png("/Users/francescamicocci/Desktop/tiff_pic/Fig2_Correlation_plot.png", width = 1200, height = 650,units="px")
+png("Export_project/Versione_finale/Fig2_Correlation_plot.png", width = 1200, height = 650,units="px")
 ggarrange(NULL,P1,NULL,labels.p,
            widths = c(-0.15,1, -0.25, 0.5), nrow = 1)
 dev.off()
 ```
 ```{r}
 #Generate the final picture
-tiff("/Users/francescamicocci/Documents/Export_project/Versione finale/corrplot.tiff", width = 1000, height = 550,units="px")
+tiff("Export_project/Versione_finale/corrplot.tiff", width = 1000, height = 550,units="px")
 ggarrange(NULL,P1,NULL,labels.p,
            widths = c(-0.15,1, -0.25, 0.5), nrow = 1)
 dev.off()
