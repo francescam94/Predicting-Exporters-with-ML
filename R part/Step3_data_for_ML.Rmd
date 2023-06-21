@@ -6,7 +6,7 @@ output: html_document
 ---
 ```{r setup, include=FALSE}
 require("knitr")
-knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+knitr::opts_knit$set(root.dir ='/your/directory/Export_project/Data/')
 ```
 
 # Import 
@@ -21,7 +21,8 @@ library(ggridges)
 
 Import data
 ```{r import data}
-load('/Users/francescamicocci/Documents/Export_project/Data/data_R.RData')
+setwd('/your/directory/')
+load('Export_project/Data/data_R.RData')
 ```
 
 # Study  the NA distribution
@@ -115,8 +116,8 @@ rm(ss,firms,training_firms_1,training_firms_2,training_firms_3,training_firms_4,
 
 # Export the workspace
 ```{r save output}
-save.image(file = '/Users/francescamicocci/Documents/Export_project/Data/data_for_ML.RData')
+save.image(file = 'Export_project/Data/data_for_ML.RData')
 
-save(exporting_history,file='/Users/francescamicocci/Documents/Export_project/Data/exporting_history.RData')
+save(exporting_history,file='Export_project/Data/exporting_history.RData')
 ```
 
