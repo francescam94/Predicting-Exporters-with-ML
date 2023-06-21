@@ -1,0 +1,197 @@
+---
+title: "Data Preparation"
+author: "Francesca Micocci"
+date: "6/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+```
+
+# Import the needed libraries
+```{r load_packages, warning = FALSE, message=FALSE}
+library(haven)
+library(dplyr)
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+```
+
+# Data Preparation
+Define the working directory and then import the data.
+
+```{r data import}
+data <- haven::read_stata('Data_panel_TFP.dta')
+```
+
+Compute the Spillovers. Remove obs with no Nuts.
+Transform the data in data.table format. Generate the following columns:
+
+  1. _count nuts_, which counts the number of exporters and   non-exporters by Nuts2
+  2. _count nace_, which counts the number of exporters and non-exporters by nace
+  3. _count nuts nace_, which counts the number of exporters and non-exporters by nace and nuts
+  4. _spillover_nace_, which counts the share of of exporters and non-exporters by nace
+  5. _spillover_nuts_, which counts the share of of exporters and non-exporters by nuts
+  6. _ext_ec_scale_, which counts the share of of exporters and non-exporters by nuts and nace
+
+Then generate a table called **spillover** where you aggregate the columns by mean. As obs within the same unit of interest contain the same value, this trick provides with the aggregates. Select the aggregates for the **exporters** and merge the obtained aggregates with the original dataset. Finally clean the environment of the useless stuff.
+```{r generate spillovers, warning = FALSE}
+dt <- data.table::data.table(data)
+dt[, countnace:=.N, by=list(export,nace_2d)]
+dt[, countnuts:=.N, by=list(export,nuts2)]
+dt[, countnutsnace:=.N, by=list(export,nuts2,nace_2d)]
+dt[, spillover_nace:=countnace/.N, by=nace_2d]
+dt[, spillover_nuts:=countnuts/.N, by=nuts2]
+dt[, ext_ec_scale:=countnutsnace/.N, by=list(nuts2,nace_2d)]
+
+spillover<-stats::aggregate(dt[, c("spillover_nace","spillover_nuts","ext_ec_scale")], list(dt$nace_2d,dt$nuts2,dt$export), mean)
+spillover=spillover[spillover$Group.3==1,]
+spillover=subset(spillover,select=-c(Group.3))
+names(spillover)<-c("nace_2d","nuts2","spillover_nace","spillover_nuts","ext_ec_scale")
+
+
+data<-merge(data,spillover,by=c("nace_2d","nuts2"),all=TRUE)
+data$spillover_nace[is.na(data$spillover_nace)]<- 0
+
+rm(dt,spillover)
+```
+Fix some missing nuts2, using nuts3
+```{r}
+data$nuts2<-ifelse(data$nuts2==""&data$nuts3!="",substr(data$nuts3,1,4),data$nuts2)
+```
+
+## Fix some variable formats
+
+Transform to factor some of the variables of interest.
+```{r data format}
+data$nuts2<-as.factor(data$nuts2)
+data$nace_2d<-as.factor(data$nace_2d)
+```
+
+#  Negative Exports
+Note there are some negative export. Let's have a look at the yearly distribution of export class between positive, negative, 0.
+
+Generate a variable called **exportlevel** which takes values:
+
++ _negative_ if the export revenues are negative
++ _positive_ if the export revenues are positive
++ _0_ otherwise.
+
+Then plot the yearly trend of the number of observations within such three export categories.
+
+```{r negative export}
+data$exportlevel<-ifelse(data$exportrevenueeur<0,"negative",ifelse(data$exportrevenueeur
+                          ==0,"0","positive"))
+yearly_counts <- data[which(!is.na(data$export)),] %>%
+  count(year, exportlevel)
+
+ggplot(data = yearly_counts, aes(x = as.factor(year), y = n, group = exportlevel,
+      color=as.factor(exportlevel))) +geom_line()+labs(title = "Export revenues type by year", x = "year", y = "number of obs", color = "Export\nRevenues") +theme_grey(base_size = 14)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+The number of negative cases are very limited and we are only interested in positive export quantities so we can classify negative export revenues as zeros
+
+```{r}
+yearly_counts2 <- data[which(!is.na(data$export)),] %>%
+  count(year, export)
+ggplot(data = yearly_counts2, aes(x = as.factor(year), y = n, group = export,
+      color=as.factor(export))) +geom_line()+labs(title = "Exporters and non-exporters by year", x = "year",y = "number of firms", color = "Export\ndummy") +
+      theme_grey(base_size = 14)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+# Remove 2019
+
+Due to the high number of missing in 2019, let us remove such year of data.
+
+```{r drop 2019}
+data<-subset(data,data$year!="2019")
+```
+
+Clear the environment
+```{r}
+rm(yearly_counts,yearly_counts2)
+```
+
+# Generate variables on exporting history
+
+1. Generate lagged values of exporting activity
+
+```{r l.export}
+data<-data[order(data$bvdidnumber,data$year),]
+
+data[["export_1"]]<-c(NA,data[["export"]][-nrow(data)])
+data[["export_1"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_2"]]<-c(NA,data[["export_1"]][-nrow(data)])
+data[["export_2"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_3"]]<-c(NA,data[["export_2"]][-nrow(data)])
+data[["export_3"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_4"]]<-c(NA,data[["export_3"]][-nrow(data)])
+data[["export_4"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_5"]]<-c(NA,data[["export_4"]][-nrow(data)])
+data[["export_5"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_6"]]<-c(NA,data[["export_5"]][-nrow(data)])
+data[["export_6"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_7"]]<-c(NA,data[["export_6"]][-nrow(data)])
+data[["export_7"]][which(!duplicated(data$bvdidnumber))]<-NA
+
+data[["export_8"]]<-c(NA,data[["export_7"]][-nrow(data)])
+data[["export_8"]][which(!duplicated(data$bvdidnumber))]<-NA
+```
+
+2. Create the table __exporting_history__, whose rows are the firms and the columns are yearly dummies, taking value 1 if firm i is exporting in year t, 0 otherwise.
+
+3. Generate the variable __export_shape__, which is a string composed by a combination of of the yearly dummies.
+
+4. Define the variable __export_type__, based on the export shape. 
+    + *continuous exporters*: firms exporting all years, whose export shape is "111111111"
+   + *switching exporters*: firms which are never exporting from 2011 to t, and always export from t to 2018 (export shapes: "000000001","000000011","000000111","000001111","000011111","00011111","001111111","011111111")
+    + *switching non-exporters*: firms which are always exporting from 2011 to t, and never export from t to 2018 (export shapes: "111111110","111111100","111111000","111110000","111100000","111000000","110000000","100000000")
+    + *non-exporters*: firms never exporting, whose export shape is "000000000"
+    + *discontinuous exporters*: firms exporting with irregualar patterns
+```{r}
+exporting_history<-reshape(data[,c("bvdidnumber","year","export")], idvar = "bvdidnumber", timevar = "year", direction = "wide")
+
+exporting_history$export_shape<-paste(exporting_history$export.2010, exporting_history$export.2011,exporting_history$export.2012,exporting_history$export.2013,exporting_history$export.2014,exporting_history$export.2015,exporting_history$export.2016,exporting_history$export.2017,exporting_history$export.2018, sep="")
+
+stopped<-c("111111110","111111100","111111000","111110000","111100000","111000000","110000000","100000000")
+started<-c("000000001","000000011","000000111","000001111","000011111","000111111","001111111","011111111")
+
+exporting_history$export_type<-ifelse(exporting_history$export_shape=="111111111","Constant",
+                               ifelse(exporting_history$export_shape=="000000000","Non-exporter",
+                               ifelse(exporting_history$export_shape %in% stopped,"Switching non-exporters",
+                               ifelse(exporting_history$export_shape %in% started,"Switching exporters","Discontinuous"))))
+
+rm(stopped,started)
+```
+
+5. Generate the variable __past exporting activity__ which, at each year $t$ and firm $i$, contains the number of years such firm $i$ exported in the interval $t=2010$ to $t-1$
+
+```{r}
+index<-grep("export_",colnames(data))
+data$past_exp_intensity<-apply(data[index], 1, sum,na.rm=TRUE)
+data$past_exp_intensity<-data$past_exp_intensity+data$export
+```
+
+Remove the lagged export variables
+```{r remove lags}
+data<-data[-c(index)]
+```
+
+Clear the environment of useless stuff
+```{r}
+rm(index)
+```
+
+# Export the RData
+```{r save output}
+save.image(file = '/Users/francescamicocci/Documents/Export_project/Data/data_R.RData')
+```
+

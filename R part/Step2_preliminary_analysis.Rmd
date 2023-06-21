@@ -1,0 +1,208 @@
+---
+title: "Preliminary Analysis"
+author: "Francesca Micocci"
+date: "6/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+```
+
+
+Perform a preliminary analysis on the persistency of exporting activity. Then verify the relationship between export status and some variables which are traditionally correlated with exporting activity, e.g., **size**, **TFP**,**markups**,* **wage**. In particular, draw some graphs and run Welsch tests to check for the distribution of variables of interest in the population of exporters vs non-exporters
+
+# Import 
+
+Import the required libraries
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(scales)
+library(ggpubr)
+library(corrplot)
+library(gridGraphics)
+library(grid)
+```
+
+Import data obtained as output of Step1 on R
+
+```{r}
+load('/Users/francescamicocci/Documents/Export_project/Data/data_R.RData')
+```
+# Persistency of exporting activity
+
+Check for the distribution of exporters in terms of _"number of years they exported, out of 9 possible"_. Then draw the graph.
+
+```{r}
+data_exp_int<-data[,c("bvdidnumber","export","past_exp_intensity","year")]
+data_exp_int<-data_exp_int[data_exp_int$year==2018,]
+
+exp_years<-as.data.frame(table(data_exp_int$past_exp_intensity))
+
+ggplot(exp_years, aes(x=Var1, y=Freq)) +
+      geom_bar(stat="identity")+labs(title="Number of firms by number of exporting years" ,
+      x = "Number of years of exporting out of 9", y = "Number of firms")+
+      theme_grey(base_size = 14)
+```
+
+# Export and firm characteristics
+
+Start with TFP and markups. We expect Exporters to be more productive than non-exporters. in particular we expect exporters to have higher productivity and markups than non-exporters. Similarly we check for the difference in Log (Employment) and Wages between exporters and non-exporters. As for TFP and markuops, we expect exporters to be, on average, bigger and to pay higher salaries.
+
+## TFP
+```{r TFP graph,warning=FALSE, message=FALSE}
+ggplot(data[which(!is.na(data$export)),], aes(x=TFP_acf, fill=as.factor(export))) +
+      geom_density(alpha=.22)+labs(title="Total Factor Productivity density curve", 
+      x = "Total Factor Productivity", y = "density", fill = "Export \ndummy\n") +
+      theme_grey(base_size = 14)
+```
+```{r TFP test}
+TFP.t.test <- t.test(TFP_acf ~ export, data = data)
+TFP.t.test
+```
+## Markups
+```{r markups plot,warning=FALSE, message=FALSE}
+ggplot(data[which(!is.na(data$export)),], aes(x=markups, fill=as.factor(export))) +
+      geom_density(alpha=.22)+labs(title="Markups density curve", x = "Markups", 
+      y = "density", fill = "Export \ndummy\n") +theme_grey(base_size = 14)+
+      coord_cartesian(xlim = c(-1, 26)) 
+```
+
+```{r markups test}
+markups.test <- t.test(markups ~ export, data = data)
+markups.test
+```
+
+## Size
+```{r size plot,warning=FALSE, message=FALSE}
+ggplot(data[which(!is.na(data$export)),], aes(x=log_emp, fill=as.factor(export)))+
+        geom_density(alpha=.22)+labs(title="Employment size density curve" ,
+        x = "Log(number of employees)", y = "density", fill = "Export\ndummy\n")+
+        theme_grey(base_size = 14)
+```
+```{r size test}
+size.t.test <- t.test(l ~ export, data = data)
+size.t.test
+```
+## Wage
+```{r wage plot,warning=FALSE, message=FALSE}
+ggplot(data[which(!is.na(data$export)),], aes(x=wage, fill=as.factor(export))) +
+      geom_density(alpha=.22)+labs(title="Hourly Wage density curve",x="Hourly Wage",
+      fill = "Export \ndummy\n")+theme_grey(base_size = 14)
+```
+```{r wage test}
+wage.t.test <- t.test(wage ~ export, data = data)
+wage.t.test
+```
+
+# Plot exporters share by nace.
+
+1. Generate a table of exporters and non-exporters by nace
+2.  Rename the numeric variable nace_2d, to provide a short description of the corresponding Nace category
+
+```{r}
+export_by_nace<-as.data.frame(table(data$export, data$nace_2d))
+export_by_nace$Nace<-ifelse(export_by_nace$Var2=="10","10: Food products",
+ifelse(export_by_nace$Var2=="11","11: Beverages",
+ifelse(export_by_nace$Var2=="12","12:Tobacco",
+ifelse(export_by_nace$Var2=="13", "13: Textiles",
+ifelse(export_by_nace$Var2=="14", "14: Wearing Apparel",  
+ifelse(export_by_nace$Var2=="15", "15: Leather",
+ifelse(export_by_nace$Var2=="16", "16: Wood",  
+ifelse(export_by_nace$Var2=="17", "17: Paper", 
+ifelse(export_by_nace$Var2=="18", "18: Printing", 
+ifelse(export_by_nace$Var2=="19","19: Coke and refined petroleum", 
+ifelse(export_by_nace$Var2=="20", "20: Chemicals", 
+ifelse(export_by_nace$Var2=="21", "21: Pharmaceutical prod", 
+ifelse(export_by_nace$Var2=="22", "22: Rubber and Plastic",
+ifelse(export_by_nace$Var2=="23", "23: Non-metallic mineral product",  
+ifelse(export_by_nace$Var2=="24", "24: Basic metals", 
+ifelse(export_by_nace$Var2=="25", "25: Fabricated metals", 
+ifelse(export_by_nace$Var2=="26", "26: Computer, electronic and optical prod",
+ifelse(export_by_nace$Var2=="27", "27: Electrical equipment", 
+ifelse(export_by_nace$Var2=="28", "28: Machinery and equipment n.e.c.", 
+ifelse(export_by_nace$Var2=="29", "29: Motor vehicles",
+ifelse(export_by_nace$Var2=="30", "30: Other transportation",
+ifelse(export_by_nace$Var2=="31", "31: Furniture",
+"32: Other manifacturing"))))))))))))))))))))))
+export_by_nace<-export_by_nace[export_by_nace$Var2!="12",]
+
+```
+
+3.  generate a barplot, reporting the number of observations
+
+```{r}
+ggplot(export_by_nace, aes( fill=Var1, y=Freq, x=Nace,na.rm = TRUE)) + 
+  coord_flip()+geom_col(position="dodge") +
+  labs(title = "Exporters and Non-exporters by Nace rev.2", y = "Count", x = "Nace Rev.2",fill="Export Dummy")+theme_bw()+theme(legend.position="bottom")+scale_y_continuous(labels = comma_format(big.mark = ".",
+                                           decimal.mark = ","))+geom_text(aes(label = round(Freq, 1)),position = position_dodge(0.95),vjust = 0.5,hjust = -0.2,size=2)+ expand_limits(y = 140000)
+```
+
+# Correlation matrix of predictors
+
+As a first step keep only numeric variables. Then draw the correlation matrix.
+
+```{r, results='hide',fig.show='hide'}
+#Generate the index of the numeric variables
+numeric_var<-unlist(lapply(data_ML.n, is.numeric))  
+# Keep only numeric variables
+for_corr_matrix<-data_ML.n[,numeric_var]
+# Drop year and output
+for_corr_matrix<-subset(for_corr_matrix,select=-c(year,export))
+# Order the predictors alphabetically
+for_corr_matrix<-for_corr_matrix[,order(colnames(for_corr_matrix))]
+
+# Generate a list of the variable names
+col_names<-c("added value","age","capital adequacy ratio","capital intensity","cash and cash equiv.","cash flow","creditors","current assets","current liabilities","current ratio","debtors","deprec. and amort.","EBITDA","external econ. of scale","financial constraints","financial sustainability","financial expenses","financial revenue","fixed assets","ICR","intangible fixed assets","interest paid","labour productivity","liquidity returns","liquidity ratio","loans","size","long-term debt","markups","material costs","non-current liab","oper. revenue turn.","productive capacity","profitability","shareholders funds","size-age","solvency ratio","industrial spillovers","regional spillovers","tangible fixed ass.","taxation","TFP ACF","total assets","wage","working capital")
+#Generate short names to be used in the graph
+new_names<-paste("V",1:length(col_names),sep="")
+# Rename the columns on the table 
+colnames(for_corr_matrix) <- new_names
+
+#Generate the correlation matrix
+#testRes = cor.mtest(for_corr_matrix,use = "complete.obs",conf.level = 0.95)
+res <- cor(for_corr_matrix,use = "complete.obs")
+#Generate a vector to be used for the legend
+new_names2=paste(new_names,": ",sep="")
+
+#Generate the table to be put in the legend
+labels2<-cbind.data.frame(new_names2[1:23],col_names[1:23],c(new_names2[24:45]," "),c(col_names[24:45]," "),stringsAsFactors = F)
+#Drop colnames
+colnames(labels2)<-c(" "," "," "," ")
+# Generate the gg table
+labels.p <- ggtexttable(labels2, rows = NULL, 
+                        theme=ttheme(
+              colnames.style = colnames_style(color = "black", fill = "white",hjust=0,x=0.1),
+              tbody.style = tbody_style(color = "black",fill=c("white","white","white","white"), hjust=0, x=0.1,size = 12)
+            ))
+  
+# Put column 1 and 3 in Bold
+for (i in 2:24){
+  labels.p <-table_cell_font(labels.p, row = i, column = 1,
+                             face= "bold",size=12)
+}
+for (i in 2:23){
+  labels.p <-table_cell_font(labels.p, row = i, column = 3,
+                             face= "bold",size=12)
+}
+labels.p=labels.p%>%tab_add_title(text = "Legend", face = "bold", size = 14)
+# Generate the correlartion matrix
+corrplot(res, tl.pos = "td", tl.cex = 0.7, method = "ellipse", type = "upper",tl.col = "black", mar = c(1, 1, 1, 1),asp=1)
+#Store it in a grid obj
+grid.echo()
+P1 <- grid.grab()
+#Generate the final picture
+png("/Users/francescamicocci/Desktop/tiff_pic/Fig2_Correlation_plot.png", width = 1200, height = 650,units="px")
+ggarrange(NULL,P1,NULL,labels.p,
+           widths = c(-0.15,1, -0.25, 0.5), nrow = 1)
+dev.off()
+```
+```{r}
+#Generate the final picture
+tiff("/Users/francescamicocci/Documents/Export_project/Versione finale/corrplot.tiff", width = 1000, height = 550,units="px")
+ggarrange(NULL,P1,NULL,labels.p,
+           widths = c(-0.15,1, -0.25, 0.5), nrow = 1)
+dev.off()
+```
+

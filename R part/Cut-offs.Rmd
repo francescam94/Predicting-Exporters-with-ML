@@ -1,0 +1,510 @@
+---
+title: "New Checks"
+author: "Francesca Micocci"
+date: "7/7/2021"
+output: html_document
+---
+# Libraries
+```{r libraries,message=FALSE,warning=FALSE}
+library(foreign)
+library(haven)
+library(reshape2)
+library(ggplot2)
+library(caret)
+library(knitr)
+library(kableExtra)
+library(PRROC)
+library(sf)
+library(tmap)
+library(scales)
+library(viridis)
+```
+
+# Cut-off
+
+Generate Sensitivity and Specificity at different probability thresholds. Then show graphically the optimalcutoff,i.e. the point where the Sensitivity and Specificity curves intercept.
+
+1. Upload the data
+
+```{r upload files}
+rm(list=ls())
+load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
+load("/Users/francescamicocci/Documents/Export_project/Data/results_no_na.RData")
+```
+
+2. Merge the prediction results in a single dataset
+
+```{r all pred}
+final<-merge(results[,c("bvdidnumber","year","export","bart_mia_prob")],results_no_na[,c("bvdidnumber","year","export","logit.prob","rf.prob","bart.prob","lasso.prob")],by=c("bvdidnumber","year","export"),all.x = TRUE, all.y = TRUE)
+rm(results_no_na)
+```
+
+3. Generate the sensitivity/specificity graphs by cutoffs.
+
+## BART-MIA
+Generate a sequence of 100 probability cutoff, each corresponding to an additional predicted probability of 0.01. Then generate a table reporting for each of these probability cutoffs the corresponding Sensitivity and Specificity.
+
+```{r bart_mia}
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:99){
+  predictions<-ifelse(final$bart_mia_prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,final$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[1,2])
+  specificity<-tab[1,1]/(tab[1,1]+tab[2,1])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+
+cutoffs$BACC<-(cutoffs$Sensitivity+cutoffs$Specificity)/2
+bart_mia <- melt(cutoffs, id.vars = c("cutoff"))
+```
+
+Plot the Sensitivity and Specificity graphs. 
+
+```{r bart_mia graph}
+ggplot(bart_mia,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ",size=0.1) 
+```
+
+## BART
+```{r bart}
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:99){
+  predictions<-ifelse(final$bart.prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,final$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[1,2])
+  specificity<-tab[1,1]/(tab[1,1]+tab[2,1])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+
+cutoffs$BACC<-(cutoffs$Sensitivity+cutoffs$Specificity)/2
+bart <- melt(cutoffs, id.vars = c("cutoff"))
+```
+plot the Sensitivity and Specificity graphs at different probability thresholds
+```{r bart graph}
+ggplot(bart,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ",size=0.2) 
+```
+
+## Random Forest
+```{r RF, message=FALSE, warning=FALSE}
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:98){
+  predictions<-ifelse(final$rf.prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,final$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[1,2])
+  specificity<-tab[1,1]/(tab[1,1]+tab[2,1])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+cutoffs$BACC<-(cutoffs$Sensitivity+cutoffs$Specificity)/2
+rf <- melt(cutoffs, id.vars = c("cutoff"))
+```
+plot the Sensitivity and Specificity graphs at different probability threshold
+```{r RF graph, warning=FALSE,message=FALSE}
+ggplot(rf,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ",size=0.2) 
+```
+
+## Lasso
+```{r lasso}
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:99){
+  predictions<-ifelse(final$lasso.prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,final$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[1,2])
+  specificity<-tab[1,1]/(tab[1,1]+tab[2,1])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+
+cutoffs$BACC<-(cutoffs$Sensitivity+cutoffs$Specificity)/2
+lasso <- melt(cutoffs, id.vars = c("cutoff"))
+```
+plot the Sensitivity and Specificity graphs at different probability threshols
+```{r lasso graph}
+ggplot(lasso,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ",size=0.2) 
+```
+
+## Logit
+```{r logit}
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:99){
+  predictions<-ifelse(final$logit.prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,final$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[1,2])
+  specificity<-tab[1,1]/(tab[1,1]+tab[2,1])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+
+cutoffs$BACC<-(cutoffs$Sensitivity+cutoffs$Specificity)/2
+logit <- melt(cutoffs, id.vars = c("cutoff"))
+```
+plot the Sensitivity and Specificity graphs at different probability threshols
+```{r logit graph}
+ggplot(logit,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ",size=0.2 ) 
+```
+
+## Export data
+
+Now export the data with the predicted probabilities of the algorithms,to be used in stata to compute the optimal cut-off for export status prediction.
+```{r export data}
+write.dta(final, "/Users/francescamicocci/Documents/Export_project/Data/final.dta")
+```
+
+Use the cutoffs obtained in Stata to predict the export status of firms. Note that we will have a different optimal cutoff for each different algorithm. This kind of approach is useful to evaluate the final performance of the models. Note indeed, that the displayed Sensitivity and Specificity are the optimal ones for each model and this allows to compare such statistics across models.
+
+```{r import cutoffs}
+#Upload the data
+final<-haven::read_dta("/Users/francescamicocci/Documents/Export_project/Data/final_cutoffs.dta")
+#generate the datasets of the performance statisatics
+Stats_cutoff<-data.frame(matrix(vector(), 5, 7,
+                dimnames=list(c(), c("Model","Sensitivity","Specificity","Balanced Accuracy","ROC","PR","Optimal Cut-off"))),
+                stringsAsFactors=F)
+
+#BART-MIA
+predictions<-ifelse(final$bart_mia_prob>final$bart_mia_cutoff,1,0)
+cm1=confusionMatrix(data = factor(predictions,levels=c("1","0")),
+                reference = factor(final$export,levels=c("1","0")),positive="1")
+
+roc.cutoff<-roc.curve(scores.class0 =as.numeric(final$bart_mia_prob),
+                     weights.class0 = as.numeric(final$export),
+                     curve = T)
+
+pr.cutoff<-pr.curve(scores.class0 =as.numeric(final$bart_mia_prob),
+                     weights.class0 = as.numeric(final$export),
+                     curve = T)
+roc_BART_MIA=as.data.frame(roc.cutoff$curve)
+pr_BART_MIA=as.data.frame(pr.cutoff$curve)
+Stats_cutoff[1,1]="BART-MIA"
+Stats_cutoff[1,2]=cm1[["byClass"]][["Sensitivity"]]
+Stats_cutoff[1,3]=cm1[["byClass"]][["Specificity"]]
+Stats_cutoff[1,4]=cm1[["byClass"]][["Balanced Accuracy"]]
+Stats_cutoff[1,5]=roc.cutoff[["auc"]]
+Stats_cutoff[1,6]=pr.cutoff[["auc.integral"]]
+Stats_cutoff[1,7]=median(final$bart_mia_cutoff)
+#BART
+final2<-na.omit(final)
+predictions<-ifelse(final2$bart_prob>final2$bart_cutoff,1,0)
+cm1=confusionMatrix(data = factor(predictions,levels=c("1","0")),
+                reference = factor(final2$export,levels=c("1","0")),positive="1")
+
+roc.cutoff<-roc.curve(scores.class0 =as.numeric(final2$bart_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+pr.cutoff<-pr.curve(scores.class0 =as.numeric(final2$bart_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+roc_BART=as.data.frame(roc.cutoff$curve)
+pr_BART=as.data.frame(pr.cutoff$curve)
+Stats_cutoff[2,1]="BART"
+Stats_cutoff[2,2]=cm1[["byClass"]][["Sensitivity"]]
+Stats_cutoff[2,3]=cm1[["byClass"]][["Specificity"]]
+Stats_cutoff[2,4]=cm1[["byClass"]][["Balanced Accuracy"]]
+Stats_cutoff[2,5]=roc.cutoff[["auc"]]
+Stats_cutoff[2,6]=pr.cutoff[["auc.integral"]]
+Stats_cutoff[2,7]=median(final2$bart_cutoff)
+#Random Forest
+predictions<-ifelse(final2$rf_prob>final2$rf_cutoff,1,0)
+cm1=confusionMatrix(data = factor(predictions,levels=c("1","0")),
+                reference = factor(final2$export,levels=c("1","0")),positive="1")
+
+roc.cutoff<-roc.curve(scores.class0 =as.numeric(final2$rf_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+pr.cutoff<-pr.curve(scores.class0 =as.numeric(final2$rf_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+roc_RF=as.data.frame(roc.cutoff$curve)
+pr_RF=as.data.frame(pr.cutoff$curve)
+Stats_cutoff[3,1]="Random Forest"
+Stats_cutoff[3,2]=cm1[["byClass"]][["Sensitivity"]]
+Stats_cutoff[3,3]=cm1[["byClass"]][["Specificity"]]
+Stats_cutoff[3,4]=cm1[["byClass"]][["Balanced Accuracy"]]
+Stats_cutoff[3,5]=roc.cutoff[["auc"]]
+Stats_cutoff[3,6]=pr.cutoff[["auc.integral"]]
+Stats_cutoff[3,7]=median(final2$rf_cutoff)
+#Lasso
+predictions<-ifelse(final2$lasso_prob>final2$lasso_cutoff,1,0)
+cm1=confusionMatrix(data = factor(predictions,levels=c("1","0")),
+                reference = factor(final2$export,levels=c("1","0")),positive="1")
+
+roc.cutoff<-roc.curve(scores.class0 =as.numeric(final2$lasso_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+pr.cutoff<-pr.curve(scores.class0 =as.numeric(final2$lasso_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+roc_lasso=as.data.frame(roc.cutoff$curve)
+pr_lasso=as.data.frame(pr.cutoff$curve)
+Stats_cutoff[4,1]="Lasso"
+Stats_cutoff[4,2]=cm1[["byClass"]][["Sensitivity"]]
+Stats_cutoff[4,3]=cm1[["byClass"]][["Specificity"]]
+Stats_cutoff[4,4]=cm1[["byClass"]][["Balanced Accuracy"]]
+Stats_cutoff[4,5]=roc.cutoff[["auc"]]
+Stats_cutoff[4,6]=pr.cutoff[["auc.integral"]]
+Stats_cutoff[4,7]=median(final2$lasso_cutoff)
+#Logit
+predictions<-ifelse(final2$logit_prob>final2$logit_cutoff,1,0)
+cm1=confusionMatrix(data = factor(predictions,levels=c("1","0")),
+                reference = factor(final2$export,levels=c("1","0")),positive="1")
+
+roc.cutoff<-roc.curve(scores.class0 =as.numeric(final2$logit_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+pr.cutoff<-pr.curve(scores.class0 =as.numeric(final2$logit_prob),
+                     weights.class0 = as.numeric(final2$export),
+                     curve = T)
+roc_logit=as.data.frame(roc.cutoff$curve)
+pr_logit=as.data.frame(pr.cutoff$curve)
+Stats_cutoff[5,1]="Logit"
+Stats_cutoff[5,2]=cm1[["byClass"]][["Sensitivity"]]
+Stats_cutoff[5,3]=cm1[["byClass"]][["Specificity"]]
+Stats_cutoff[5,4]=cm1[["byClass"]][["Balanced Accuracy"]]
+Stats_cutoff[5,5]=roc.cutoff[["auc"]]
+Stats_cutoff[5,6]=pr.cutoff[["auc.integral"]]
+Stats_cutoff[5,7]=median(final2$logit_cutoff)
+
+
+for (i in 1:5){
+  for (j in 2:7){
+    Stats_cutoff[i,j]<-as.numeric(Stats_cutoff[i,j])
+  }
+}
+
+```
+**See the results**:Note that once we selected the optimal cut-off, instead of a generic 0.5, we see that BART-MIA performs better that the other algorithms in all indexed but Precision-Recall. 
+```{r pcts final stats}
+Stats_cutoff%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")
+```
+# Generate ROC and PR pics
+```{r}
+theme_no_axes <- function(base.theme = theme_bw()) {
+  base.theme %+replace%
+    theme(
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      panel.grid = element_blank()
+    )
+}
+```
+
+## Names
+```{r}
+#Names
+BART=ggplot() +                      
+  annotate("text",x = 1,y = 1,size = 13,
+           label = "BART")+ theme_no_axes(theme_grey())
+BART_MIA=ggplot() +                      # Draw ggplot2 plot with text only
+  annotate("text",x = 1,y = 1,size = 10,
+           label = "BART-MIA")+ theme_no_axes(theme_grey())
+RF=ggplot() +                      # Draw ggplot2 plot with text only
+  annotate("text",x = 1,y = 1,size = 13,
+           label = "Random \nForest")+ theme_no_axes(theme_grey())
+lasso=ggplot() +                      # Draw ggplot2 plot with text only
+  annotate("text",x = 1,y = 1,size = 13,
+           label = "Logit \nLasso")+ theme_no_axes(theme_grey())
+logit=ggplot() +                      # Draw ggplot2 plot with text only
+  annotate("text",x = 1,y = 1,size = 13,
+           label = "Logit")+ theme_no_axes(theme_grey())
+
+```
+## ROC
+```{r}
+#ROC
+roc.BART=ggplot(roc_BART, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+ guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("FPR")+ylab("Sensitivity")+
+  labs(title=paste("\n ROC curve \n AUC=",round(Stats_cutoff[2,5],4),sep=""))+
+  theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+roc.BART_MIA=ggplot(roc_BART_MIA, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+ guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("FPR")+ylab("Sensitivity")+
+  labs(title=paste("\n ROC curve \n AUC=",round(Stats_cutoff[1,5],4),sep=""))+
+  theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+roc.RF=ggplot(roc_RF, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+ guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("FPR")+ylab("Sensitivity")+
+  labs(title=paste("\n ROC curve \n AUC=",round(Stats_cutoff[3,5],4),sep=""))+
+ theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+
+roc.lasso=ggplot(roc_lasso, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("FPR")+ylab("Sensitivity")+
+  labs(title=paste("\n ROC curve \n AUC=",round(Stats_cutoff[4,5],4),sep=""))+
+ theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+
+
+roc.logit=ggplot(roc_logit, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("FPR")+ylab("Sensitivity")+
+  labs(title=paste("\n ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+ theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+```
+## PR
+```{r}
+pr.BART=ggplot(pr_BART, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("Recall")+ylab("Precision")+
+  labs(title=paste("ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+  theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+pr.BART_MIA=ggplot(pr_BART_MIA, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("Recall")+ylab("Precision")+
+  labs(title=paste("ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+ theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+pr.RF=ggplot(pr_RF, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("Recall")+ylab("Precision")+
+  labs(title=paste("ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+ theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+pr.lasso=ggplot(pr_lasso, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("Recall")+ylab("Precision")+
+  labs(title=paste("ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+  theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+pr.logit=ggplot(pr_logit, aes(x=V1, y=V2,color=V3)) +geom_point()+scale_colour_gradientn(name="",colors=rainbow(7),limits = c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1))+
+guides(colour = guide_colourbar(label.theme = element_text(angle = 90,size=12),barheight =20,barwidth = 0.8))+
+  xlab("Recall")+ylab("Precision")+
+  labs(title=paste("ROC curve \n AUC=",round(Stats_cutoff[5,5],4),sep=""))+
+  theme(plot.title = element_text(hjust = 0.5,size=16,face='bold'),
+        axis.text.y   = element_text(size=14),
+        axis.text.x   = element_text(size=14),
+        axis.title.y  = element_text(size=14),
+        axis.title.x  = element_text(size=14),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+
+
+```
+
+```{r}
+library("ggpubr")
+library(ggplot2)
+library(gridExtra)
+library(grid)
+plot.list=list(logit,roc.logit,pr.logit,lasso,roc.lasso,pr.lasso,RF,roc.RF,pr.RF,BART,roc.BART,pr.BART,BART_MIA,roc.BART_MIA,pr.BART_MIA)
+tiff(filename="/Users/francescamicocci/Desktop/tiff_pic/ROC_PR.tiff",units="px",width=1400, height=2000)
+ggarrange(plotlist = plot.list,ncol = 3,
+  nrow = 5,widths = c(0.3, 1,1))
+dev.off()
+
+png(filename="/Users/francescamicocci/Desktop/tiff_pic/ROC_PR.png",units="px",width=1400, height=2000)
+ggarrange(plotlist = plot.list,ncol = 3,
+  nrow = 5,widths = c(0.3, 1,1))
+dev.off()
+
+```
+
+
+clear the environment
+```{r clean}
+rm(cm1,cutoffs,final2,pr.cutoff,roc.cutoff,cutoff_ls,i,j,sensitivity,specificity,tab,predictions)
+```
+

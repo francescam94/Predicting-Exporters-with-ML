@@ -1,0 +1,1207 @@
+---
+title: "ML analysis without NA"
+author: "Francesca Micocci"
+date: "6/25/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+```
+In the present script we are going to train and test the following ML algorithms:
+
+1. Logit
+2. CART
+3. Random Forest
+4. BART
+
+We will report separately the BART-MIA as such code is run directly on the Server, due to the longer time required for the computation.
+
+# Import 
+
+Import the required libraries
+```{r libraries, warning=FALSE, message=FALSE}
+library(caret)
+library(PRROC)
+library(randomForest)
+library(rpart)
+library(hdm)
+library(dplyr)
+library(tidyverse)
+library(rpart.plot)
+```
+
+Import data
+```{r load data}
+load('/Users/francescamicocci/Documents/Export_project/Data/data_for_ML.RData')
+```
+
+# Logit
+Run a traditional logit to be used a comparison benchmark and evaluate the prediction performance of logit.
+
+Note we are running the code 5 times, one for each random subset of firms we generated in Step3.The idea is to verify that the algorithm results are not driven by a specific partition between train and test.
+
+1. Compute the model
+2. Generate the probabilistic predictions of the model
+3. Use $0.5$ as threshold for classification:
+
+$$logit.pred=\begin{cases}
+1 & \text{if }logit.prob>0.5\\
+0 & otherwise
+\end{cases}$$
+
+
+```{r logit, warning=FALSE, message=FALSE}
+logit1<-glm(formula.logit, data=test1,family="binomial")
+test1$logit.prob = predict(logit1, test1,type="response")
+test1$logit.pred = ifelse(test1$logit.prob>0.5,1,0)
+
+
+logit2<-glm(formula.logit, data=test2,family="binomial")
+test2$logit.prob = predict(logit2, test2,type="response")
+test2$logit.pred = ifelse(test2$logit.prob>0.5,1,0)
+
+
+logit3<-glm(formula.logit, data=test3,family="binomial")
+test3$logit.prob = predict(logit3, test3,type="response")
+test3$logit.pred = ifelse(test3$logit.prob>0.5,1,0)
+
+
+logit4<-glm(formula.logit, data=test4,family="binomial")
+test4$logit.prob = predict(logit4, test4,type="response")
+test4$logit.pred = ifelse(test4$logit.prob>0.5,1,0)
+
+
+logit5<-glm(formula.logit, data=test5,family="binomial")
+test5$logit.prob = predict(logit5, test5,type="response")
+test5$logit.pred = ifelse(test5$logit.prob>0.5,1,0)
+
+
+rm(logit1,logit2,logit3,logit4,logit5)
+```
+
+## Evaluate the model 
+Generate the confusion Matrix, which is 
+
+|                    | Actual Positives (1) | Actual Negatives U(0) |
+|:------------------:|:----------------------:|:-----------------------:|
+| **Predicted Positives (1)** | True Positives       | False Positives       |
+| **Predicted  Negatives (0) **| False Negative       | True Negatives        |
+
+Then the command _confusionMatrix_ also computes :
+
+1. **Sensitivity (or Recall)**, a measure of the proportion of correctly Predicted Positives, out of the total Actual Positives.
+$$Sensitivity=\frac{True \:Positives}{True\:Positives + False\:Positives}$$
+
+
+2. **Specificity**, a measure that catches the proportion of correctly Predicted Negatives, out of total Actual Negatives. 
+$$Specificity=\frac{True\:Negatives}{True\:Negatives + False\:Negatives}$$
+
+
+3. **Balanced Accuracy (BACC)**, a combination of Sensitivity and Specificity. It is particularly useful when classes are imbalanced, i.e., when a class appears much more often than the other. It is computed as the average between the rate of True Positives and the rate of True Negatives.
+$$BACC=\frac{Sensitivity+Specificity}{2}$$
+
+
+```{r confusionMatrix logit}
+cm1=confusionMatrix(data = as.factor(test1$logit.pred),
+                reference = as.factor(test1$export),positive = "1")
+
+cm2=confusionMatrix(data = as.factor(test2$logit.pred),
+                reference = as.factor(test2$export),positive = "1")
+
+cm3=confusionMatrix(data = as.factor(test3$logit.pred),
+                reference = as.factor(test3$export),positive = "1")
+
+cm4=confusionMatrix(data = as.factor(test4$logit.pred),
+                reference = as.factor(test4$export),positive = "1")
+
+cm5=confusionMatrix(data = as.factor(test5$logit.pred),
+                reference = as.factor(test5$export),positive = "1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r logit stats}
+Logit_Statistics<-data.frame(matrix(vector(), 4, 6,
+                dimnames=list(c(), c("Performance.Measure", "Sample1", "Sample2","Sample3","Sample4","Sample5"))),
+                stringsAsFactors=F)
+Logit_Statistics$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+Logit_Statistics$Sample1<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics$Sample2<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics$Sample3<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics$Sample4<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics$Sample5<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5)
+```
+
+**ROC Curve**
+
+The ROC curve is a graph showing the performance in classification at different thresholds, expressed in terms of the relationship between True Positive Rate (TPR) and False Positive Rate (FPR), defined as follows: 
+
+$$True\:Positive\:Rate=\frac{True\: Positives}{True\:Positives + False\:Negatives}$$
+$$False Positive Rate =\frac{False\:Positives}{False\:Positives + True\:Negatives}$$
+
+The Area Under the Curve (AUC) of ROC is then useful to evaluate performance in a bounded range between $0$ and $1$, where $0$ indicates complete misclassification, $0.5$ corresponds to an uninformative classifier, and $1$ indicates perfect prediction.
+
+```{r ROC logit}
+roc_logit1 <- roc.curve(scores.class0 =as.numeric(test1$logit.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+roc_logit2 <- roc.curve(scores.class0 =as.numeric(test2$logit.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+roc_logit3 <- roc.curve(scores.class0 =as.numeric(test3$logit.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+roc_logit4 <- roc.curve(scores.class0 =as.numeric(test4$logit.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+roc_logit5 <- roc.curve(scores.class0 =as.numeric(test5$logit.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+
+roc<-c("ROC",roc_logit1[["auc"]],roc_logit2[["auc"]],roc_logit3[["auc"]],roc_logit4[["auc"]],roc_logit5[["auc"]])
+
+Logit_Statistics<-rbind(Logit_Statistics,roc)
+rm(roc_logit1,roc_logit2,roc_logit3,roc_logit4,roc_logit5,roc)
+```
+**PR Curve**
+
+The PR curve is a graph showing the trade-off between Precision and Recall at different thresholds. Note that Precision and Recall are defined as follows:
+ 
+$$Precision=\frac{True\:Positives}{True\:Positives + False\:Positives}$$
+$$Recall=\frac{True\:Positives}{True\:Positives + False\:Negatives}$$
+ 
+ As for the ROC curve, the PR AUC is used to evaluate the classifier performance. A High AUC represents both high recall and high precision, thus meaning the classifier is returning accurate results (high precision), as well as returning a majority of all the positive results (high recall).
+ 
+
+```{r PR logit}
+pr_logit1 <- pr.curve(scores.class0 =as.numeric(test1$logit.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+pr_logit2 <- pr.curve(scores.class0 =as.numeric(test2$logit.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+pr_logit3 <- pr.curve(scores.class0 =as.numeric(test3$logit.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+pr_logit4 <- pr.curve(scores.class0 =as.numeric(test4$logit.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+pr_logit5 <- pr.curve(scores.class0 =as.numeric(test5$logit.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+
+pr<-c("PR",pr_logit1[["auc.integral"]],pr_logit2[["auc.integral"]],pr_logit3[["auc.integral"]],pr_logit4[["auc.integral"]],pr_logit5[["auc.integral"]])
+
+Logit_Statistics<-rbind(Logit_Statistics,pr)
+rm(pr_logit1,pr_logit2,pr_logit3,pr_logit4,pr_logit5,pr)
+
+Logit_Statistics[,c(2:6)] <- sapply(Logit_Statistics[,c(2:6)],as.numeric)
+Logit_Statistics=Logit_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+```
+See the results:
+```{r logit stats final}
+Logit_Statistics%>%
+  knitr::kable(digits = 4) %>%
+  kableExtra::kable_paper("hover", full_width = T)
+```
+## ROC and PR graphs
+```{r}
+roc_logit <- roc.curve(scores.class0 =as.numeric(test1$logit.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+pr_logit <- pr.curve(scores.class0 =as.numeric(test1$logit.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+plot(roc_logit)
+plot(pr_logit)
+```
+# CART
+
+Now we run the CART
+```{r cart}
+rpart1 <- rpart(formula.ML, data=train1, method="class")
+test1$rpart <- predict(rpart1, newdata=test1,type='class')
+
+rpart2 <- rpart(formula.ML, data=train2, method="class")
+test2$rpart <- predict(rpart2, newdata=test2,type='class')
+
+rpart3 <- rpart(formula.ML, data=train3, method="class")
+test3$rpart <- predict(rpart3, newdata=test3,type='class')
+
+rpart4 <- rpart(formula.ML, data=train4, method="class")
+test4$rpart <- predict(rpart4, newdata=test4,type='class')
+
+rpart5 <- rpart(formula.ML, data=train5, method="class")
+test5$rpart <- predict(rpart5, newdata=test5,type='class')
+```
+
+Evaluate the quality of the model. Note there is some instability in variable selection.
+```{r cart plot}
+rpart.plot(rpart1,
+               main = "Current Exporting Status \n(Sample 1)")
+rpart.plot(rpart2,
+               main = "Current Exporting Status \n(Sample 2)")
+rpart.plot(rpart3,
+               main = "Current Exporting Status \n(Sample 3)")
+rpart.plot(rpart4,
+               main = "Current Exporting Status \n(Sample 4)")
+rpart.plot(rpart5,
+               main = "Current Exporting Status \n(Sample 5)")
+```
+## Evaluate the model
+
+Confusion Matrix
+```{r confusionMatrix cart}
+cm1=confusionMatrix(data = as.factor(test1$rpart),
+                reference = as.factor(test1$export),positive = "1")
+
+cm2=confusionMatrix(data = as.factor(test2$rpart),
+                reference = as.factor(test2$export),positive = "1")
+
+cm3=confusionMatrix(data = as.factor(test3$rpart),
+                reference = as.factor(test3$export),positive = "1")
+
+cm4=confusionMatrix(data = as.factor(test4$rpart),
+                reference = as.factor(test4$export),positive = "1")
+
+cm5=confusionMatrix(data = as.factor(test5$rpart),
+                reference = as.factor(test5$export),positive = "1")
+rm(rpart1,rpart2,rpart3,rpart4,rpart5)
+```
+
+Generate a Table Summarizing the performance measures
+```{r cart stats}
+CART_Statistics<-data.frame(matrix(vector(), 4, 6,
+                dimnames=list(c(), c("Performance.Measure", "Sample1", "Sample2","Sample3","Sample4","Sample5"))),
+                stringsAsFactors=F)
+CART_Statistics$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+CART_Statistics$Sample1<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+CART_Statistics$Sample2<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+CART_Statistics$Sample3<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+CART_Statistics$Sample4<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+CART_Statistics$Sample5<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+CART_Statistics[,c(2:6)] <- sapply(CART_Statistics[,c(2:6)],as.numeric)
+CART_Statistics=CART_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+rm(cm1,cm2,cm3,cm4,cm5)
+```
+See the results:
+```{r cart stats final, warning=FALSE,message=FALSE}
+CART_Statistics%>%
+  knitr::kable(digits = 4) %>%
+  kableExtra::kable_paper("hover", full_width = T)
+```
+
+# SERVER
+Export the training data to be used. Upload it on terminal. Proceed with the algorithms on the Server. Download the Data back to local. Keep with usual stuff
+
+Save data to be used locally.
+```{r export train and test}
+save(train1,file= "/Users/francescamicocci/Documents/Export_project/Data/train1.RData")
+save(test1,file= "/Users/francescamicocci/Documents/Export_project/Data/test1.RData")
+save(train2,file= "/Users/francescamicocci/Documents/Export_project/Data/train2.RData")
+save(test2,file= "/Users/francescamicocci/Documents/Export_project/Data/test2.RData")
+save(train3,file= "/Users/francescamicocci/Documents/Export_project/Data/train3.RData")
+save(test3,file= "/Users/francescamicocci/Documents/Export_project/Data/test3.RData")
+save(train4,file= "/Users/francescamicocci/Documents/Export_project/Data/train4.RData")
+save(test4,file= "/Users/francescamicocci/Documents/Export_project/Data/test4.RData")
+save(train5,file= "/Users/francescamicocci/Documents/Export_project/Data/train5.RData")
+save(test5,file= "/Users/francescamicocci/Documents/Export_project/Data/test5.RData")
+
+save(formula.ML,file="/Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData")
+```
+
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train1.RData   francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test1.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train3.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test3.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train4.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test4.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+# Random Forest
+
+### Sample 1
+This is how to enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+
+Open R on the Server and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train1.RData")
+load("/home/francesca.micocci/Export_project/test1.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+
+Run the algorithm
+```{}
+set.seed(2021)
+library(randomForest)
+rf <- randomForest(formula.ML, data=train1, importance=TRUE, ntree = 300, mtry = 7)
+```
+
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+fitted.prob2 <- predict(rf, test1,type='prob')
+rf.fitted.prob1<-fitted.prob2[,2]
+
+save(rf.fitted.prob,file="/home/francesca.micocci/Export_project/rf.fitted.prob1.RData")
+```
+### Sample 2
+
+This is how to enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+
+Open R on the Server and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train2.RData")
+load("/home/francesca.micocci/Export_project/test2.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+
+Run the algorithm
+```{}
+set.seed(2021)
+library(randomForest)
+rf <- randomForest(formula.ML, data=train2, importance=TRUE, ntree = 300, mtry = 7)
+```
+
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+fitted.prob2 <- predict(rf, test2,type='prob')
+rf.fitted.prob2<-fitted.prob2[,2]
+
+save(rf.fitted.prob2,file="/home/francesca.micocci/Export_project/rf.fitted.prob2.RData")
+```
+### Sample 3
+
+This is how to enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+
+Open R on the Server and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train3.RData")
+load("/home/francesca.micocci/Export_project/test3.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+
+Run the algorithm 
+```{}
+set.seed(2021)
+library(randomForest)
+rf <- randomForest(formula.ML, data=train3, importance=TRUE, ntree = 300, mtry = 7)
+```
+
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+fitted.prob2 <- predict(rf, test3,type='prob')
+rf.fitted.prob3<-fitted.prob2[,2]
+
+save(rf.fitted.prob3,file="/home/francesca.micocci/Export_project/rf.fitted.prob3.RData")
+```
+
+### Sample 4
+This is how to enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+
+Open R on the Server and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train4.RData")
+load("/home/francesca.micocci/Export_project/test4.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+
+Run the algorithm 
+```{}
+set.seed(2021)
+library(randomForest)
+rf <- randomForest(formula.ML, data=train4, importance=TRUE, ntree = 300, mtry = 7)
+```
+
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+fitted.prob2 <- predict(rf, test4,type='prob')
+rf.fitted.prob4<-fitted.prob2[,2]
+
+save(rf.fitted.prob4,file="/home/francesca.micocci/Export_project/rf.fitted.prob4.RData")
+```
+
+### Sample 5
+This is how to enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+
+Open R on the Server and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train5.RData")
+load("/home/francesca.micocci/Export_project/test5.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+
+Run the algorithm 
+```{}
+set.seed(2021)
+library(randomForest)
+rf <- randomForest(formula.ML, data=train5, importance=TRUE, ntree = 300, mtry = 7)
+```
+
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+fitted.prob2 <- predict(rf, test5,type='prob')
+rf.fitted.prob5<-fitted.prob2[,2]
+
+save(rf.fitted.prob5,file="/home/francesca.micocci/Export_project/rf.fitted.prob5.RData")
+```
+
+Close R and Terminal. Then Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.prob1.RData /Users/francescamicocci/Documents/Server/rf.fitted.prob1.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.prob2.RData /Users/francescamicocci/Documents/Server/rf.fitted.prob2.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.prob3.RData /Users/francescamicocci/Documents/Server/rf.fitted.prob3.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.prob4.RData /Users/francescamicocci/Documents/Server/rf.fitted.prob4.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.prob5.RData /Users/francescamicocci/Documents/Server/rf.fitted.prob5.RData
+KQyVZQ9v3uL
+```
+
+### Evaluate RF
+Now proceed with the predictions based on Ranfom Forest.
+
+```{r load predictions RF}
+load("/Users/francescamicocci/Documents/Server/rf.fitted.prob1.RData")
+load("/Users/francescamicocci/Documents/Server/rf.fitted.prob2.RData")
+load("/Users/francescamicocci/Documents/Server/rf.fitted.prob3.RData")
+load("/Users/francescamicocci/Documents/Server/rf.fitted.prob4.RData")
+load("/Users/francescamicocci/Documents/Server/rf.fitted.prob5.RData")
+
+test1$rf.prob<-rf.fitted.prob1
+test2$rf.prob<-rf.fitted.prob2
+test3$rf.prob<-rf.fitted.prob3
+test4$rf.prob<-rf.fitted.prob4
+test5$rf.prob<-rf.fitted.prob5
+
+test1$rf.pred <- ifelse(test1$rf.prob>0.5,1,0)
+test2$rf.pred <- ifelse(test2$rf.prob>0.5,1,0)
+test3$rf.pred <- ifelse(test3$rf.prob>0.5,1,0)
+test4$rf.pred <- ifelse(test4$rf.prob>0.5,1,0)
+test5$rf.pred <- ifelse(test5$rf.prob>0.5,1,0)
+
+rm(rf.fitted.prob1,rf.fitted.prob2,rf.fitted.prob3,rf.fitted.prob4,rf.fitted.prob5)
+```
+
+Confusion Matrix
+```{r confusionMatrix RF}
+cm1=confusionMatrix(data = as.factor(test1$rf.pred),
+                reference = as.factor(test1$export),positive = "1")
+cm2=confusionMatrix(data = as.factor(test2$rf.pred),
+                reference = as.factor(test2$export),positive = "1")
+cm3=confusionMatrix(data = as.factor(test3$rf.pred),
+                reference = as.factor(test3$export),positive = "1")
+cm4=confusionMatrix(data = as.factor(test4$rf.pred),
+                reference = as.factor(test4$export),positive = "1")
+cm5=confusionMatrix(data = as.factor(test5$rf.pred),
+                reference = as.factor(test5$export),positive = "1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r RF stats}
+RF_Statistics<-data.frame(matrix(vector(), 4, 6,
+                dimnames=list(c(), c("Performance.Measure", "Sample1", "Sample2","Sample3","Sample4","Sample5"))),
+                stringsAsFactors=F)
+RF_Statistics$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+RF_Statistics$Sample1<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics$Sample2<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics$Sample3<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics$Sample4<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics$Sample5<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5)
+```
+ROC Curve
+```{r ROC RF}
+roc_rf1 <- roc.curve(scores.class0 =as.numeric(test1$rf.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+roc_rf2 <- roc.curve(scores.class0 =as.numeric(test2$rf.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+roc_rf3 <- roc.curve(scores.class0 =as.numeric(test3$rf.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+roc_rf4 <- roc.curve(scores.class0 =as.numeric(test4$rf.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+roc_rf5 <- roc.curve(scores.class0 =as.numeric(test5$rf.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+roc<-c("ROC",roc_rf1[["auc"]],roc_rf2[["auc"]],roc_rf3[["auc"]],roc_rf4[["auc"]],roc_rf5[["auc"]])
+
+RF_Statistics<-rbind(RF_Statistics,roc)
+rm(roc_rf1,roc_rf2,roc_rf3,roc_rf4,roc_rf5,roc)
+```
+PR Curve
+```{r PR RF}
+pr_rf1 <- pr.curve(scores.class0 =as.numeric(test1$rf.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+pr_rf2 <- pr.curve(scores.class0 =as.numeric(test2$rf.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+pr_rf3 <- pr.curve(scores.class0 =as.numeric(test3$rf.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+pr_rf4 <- pr.curve(scores.class0 =as.numeric(test4$rf.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+pr_rf5 <- pr.curve(scores.class0 =as.numeric(test5$rf.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+
+pr<-c("PR",pr_rf1[["auc.integral"]],pr_rf2[["auc.integral"]],pr_rf3[["auc.integral"]],pr_rf4[["auc.integral"]],pr_rf5[["auc.integral"]])
+
+RF_Statistics<-rbind(RF_Statistics,pr)
+rm(pr_rf1,pr_rf2,pr_rf3,pr_rf4,pr_rf5)
+
+RF_Statistics[,c(2:6)] <- sapply(RF_Statistics[,c(2:6)],as.numeric)
+RF_Statistics=RF_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+```
+See the results:
+```{r RF stats final}
+RF_Statistics%>%
+  knitr::kable(digits = 4) %>%
+  kableExtra::kable_paper("hover", full_width = T)
+```
+## ROC and PR graphs
+```{r}
+roc_rf <- roc.curve(scores.class0 =as.numeric(test1$rf.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+pr_rf <- pr.curve(scores.class0 =as.numeric(test1$rf.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+plot(roc_rf)
+plot(pr_rf)
+```
+
+# BART
+
+### Sample 1
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train1.RData")
+load("/home/francesca.micocci/Export_project/test1.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx150g")
+library("bartMachine")
+y <- factor(train1$export,levels=c("1","0"))
+X<-as.data.frame(train1)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,seed = 2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test1$export<-NULL
+test1$bvdidnumber<-NULL
+test1$year<-NULL
+test1$logit.prob<-NULL
+test1$logit.pred<-NULL
+test1$rpart<-NULL
+
+bart_machine.fitted1<-predict(bart_machine, test1,type='prob')
+save(bart_machine.fitted1,file="/home/francesca.micocci/Export_project/bart.fitted1.RData")
+
+```
+### Sample 2
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train2.RData")
+load("/home/francesca.micocci/Export_project/test2.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train2$export,levels=c("1","0"))
+X<-as.data.frame(train2)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,seed = 2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test2$export<-NULL
+test2$bvdidnumber<-NULL
+test2$year<-NULL
+test2$logit.prob<-NULL
+test2$logit.pred<-NULL
+test2$rpart<-NULL
+bart_machine.fitted2<-predict(bart_machine, test2,type='prob')
+save(bart_machine.fitted2,file="/home/francesca.micocci/Export_project/bart.fitted2.RData")
+
+```
+
+### Sample 3
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train3.RData")
+load("/home/francesca.micocci/Export_project/test3.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train3$export,levels=c("1","0"))
+X<-as.data.frame(train3)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,seed = 2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test3$export<-NULL
+test3$bvdidnumber<-NULL
+test3$year<-NULL
+test3$logit.prob<-NULL
+test3$logit.pred<-NULL
+test3$rpart<-NULL
+bart_machine.fitted3<-predict(bart_machine, test3,type='prob')
+save(bart_machine.fitted3,file="/home/francesca.micocci/Export_project/bart.fitted3.RData")
+
+```
+### Sample 4
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train4.RData")
+load("/home/francesca.micocci/Export_project/test4.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train4$export,levels=c("1","0"))
+X<-as.data.frame(train4)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,seed = 2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test4$export<-NULL
+test4$bvdidnumber<-NULL
+test4$year<-NULL
+test4$logit.prob<-NULL
+test4$logit.pred<-NULL
+test4$rpart<-NULL
+bart_machine.fitted4<-predict(bart_machine, test4,type='prob')
+save(bart_machine.fitted4,file="/home/francesca.micocci/Export_project/bart.fitted4.RData")
+
+```
+
+### Sample 5
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train5.RData")
+load("/home/francesca.micocci/Export_project/test5.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train5$export,levels=c("1","0"))
+X<-as.data.frame(train5)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,seed = 2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test5$export<-NULL
+test5$bvdidnumber<-NULL
+test5$year<-NULL
+test5$logit.prob<-NULL
+test5$logit.pred<-NULL
+test5$rpart<-NULL
+
+bart_machine.fitted5<-predict(bart_machine, test5,type='prob')
+save(bart_machine.fitted5,file="/home/francesca.micocci/Export_project/bart.fitted5.RData")
+
+```
+Close R and Terminal. Then Download the results on local
+```{}
+q()
+exit
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted1.RData /Users/francescamicocci/Documents/Server/bart.fitted1.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted2.RData /Users/francescamicocci/Documents/Server/bart.fitted2.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted3.RData /Users/francescamicocci/Documents/Server/bart.fitted3.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted4.RData /Users/francescamicocci/Documents/Server/bart.fitted4.RData
+KQyVZQ9v3uL
+
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted5.RData /Users/francescamicocci/Documents/Server/bart.fitted5.RData
+KQyVZQ9v3uL
+
+```
+
+### Evaluate BART
+Now proceed with the predictions based on BART.
+```{r load predictions BART}
+load("/Users/francescamicocci/Documents/Server/bart.fitted1.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted2.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted3.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted4.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted5.RData")
+
+test1$bart.prob<-(bart_machine.fitted1)
+test2$bart.prob<-(bart_machine.fitted2)
+test3$bart.prob<-(bart_machine.fitted3)
+test4$bart.prob<-(bart_machine.fitted4)
+test5$bart.prob<-(bart_machine.fitted5)
+
+rm(bart_machine.fitted1,bart_machine.fitted2,bart_machine.fitted3,bart_machine.fitted4,bart_machine.fitted5)
+
+```
+
+Confusion Matrix
+```{r confusionMatrix BART}
+test1$bart_pred<-ifelse(test1$bart.prob>0.5,1,0)
+test2$bart_pred<-ifelse(test2$bart.prob>0.5,1,0)
+test3$bart_pred<-ifelse(test3$bart.prob>0.5,1,0)
+test4$bart_pred<-ifelse(test4$bart.prob>0.5,1,0)
+test5$bart_pred<-ifelse(test5$bart.prob>0.5,1,0)
+
+cm1=confusionMatrix(data = as.factor(test1$bart_pred),
+                reference = as.factor(test1$export),positive = "1")
+cm2=confusionMatrix(data = as.factor(test2$bart_pred),
+                reference = as.factor(test2$export),positive = "1")
+cm3=confusionMatrix(data = as.factor(test3$bart_pred),
+                reference = as.factor(test3$export),positive = "1")
+cm4=confusionMatrix(data = as.factor(test4$bart_pred),
+                reference = as.factor(test4$export),positive = "1")
+cm5=confusionMatrix(data = as.factor(test5$bart_pred),
+                reference = as.factor(test5$export),positive = "1")
+
+BART_Statistics<-data.frame(matrix(vector(), 4, 6,
+                dimnames=list(c(), c("Performance.Measure", "Sample1", "Sample2","Sample3","Sample4","Sample5"))),
+                stringsAsFactors=F)
+BART_Statistics$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+BART_Statistics$Sample1<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+BART_Statistics$Sample2<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+BART_Statistics$Sample3<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+BART_Statistics$Sample4<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+BART_Statistics$Sample5<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+BART_Statistics[,c(2:6)] <- sapply(BART_Statistics[,c(2:6)],as.numeric)
+BART_Statistics=BART_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+rm(cm1,cm2,cm3,cm4,cm5)
+```
+ROC Curve
+```{r ROC BART}
+roc_BART1 <- roc.curve(scores.class0 =as.numeric(test1$bart.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+roc_BART2 <- roc.curve(scores.class0 =as.numeric(test2$bart.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+roc_BART3 <- roc.curve(scores.class0 =as.numeric(test3$bart.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+roc_BART4 <- roc.curve(scores.class0 =as.numeric(test4$bart.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+roc_BART5 <- roc.curve(scores.class0 =as.numeric(test5$bart.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+roc<-c("ROC",roc_BART1[["auc"]],roc_BART2[["auc"]],roc_BART3[["auc"]],roc_BART4[["auc"]],roc_BART5[["auc"]])
+
+BART_Statistics<-rbind(BART_Statistics,roc)
+rm(roc_BART1,roc_BART2,roc_BART3,roc_BART4,roc_BART5,roc)
+```
+PR Curve
+```{r PR BART}
+pr_BART1 <- pr.curve(scores.class0 =as.numeric(test1$bart.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+pr_BART2 <- pr.curve(scores.class0 =as.numeric(test2$bart.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+pr_BART3 <- pr.curve(scores.class0 =as.numeric(test3$bart.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+pr_BART4 <- pr.curve(scores.class0 =as.numeric(test4$bart.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+pr_BART5 <- pr.curve(scores.class0 =as.numeric(test5$bart.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+
+pr<-c("PR",pr_BART1[["auc.integral"]],pr_BART2[["auc.integral"]],pr_BART3[["auc.integral"]],pr_BART4[["auc.integral"]],pr_BART5[["auc.integral"]])
+
+BART_Statistics<-rbind(BART_Statistics,pr)
+rm(pr_BART1,pr_BART2,pr_BART3,pr_BART4,pr_BART5,pr)
+
+
+BART_Statistics[,c(2:6)] <- sapply(BART_Statistics[,c(2:6)],as.numeric)
+BART_Statistics=BART_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+```
+See the results:
+```{r BART stats final}
+BART_Statistics%>%
+  knitr::kable(digits = 4) %>%
+  kableExtra::kable_paper("hover", full_width = T)
+```
+
+## ROC and PR graphs
+```{r}
+roc_bart <- roc.curve(scores.class0 =as.numeric(test1$bart.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+pr_bart <- pr.curve(scores.class0 =as.numeric(test1$bart.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+plot(roc_bart)
+plot(pr_bart)
+```
+# POST-LASSO
+
+Run the model on the 5 random train sets.
+```{r}
+set.seed(2021)
+lasso.reg1 = rlassologit(formula.logit,data=train1, post = TRUE) 
+lasso.reg2 = rlassologit(formula.logit,data=train2, post = TRUE)
+lasso.reg3 = rlassologit(formula.logit,data=train3, post = TRUE)
+lasso.reg4 = rlassologit(formula.logit,data=train4, post = TRUE) 
+lasso.reg5 = rlassologit(formula.logit,data=train5, post = TRUE) 
+```
+
+Given the estimated coefficients, predict the probability that $export=1$
+
+```{r}
+#Generate some datasets containing the original test sets, so that you can modify them with no consequences on the originals
+test_set1<-test1
+test_set2<-test2
+test_set3<-test3
+test_set4<-test4
+test_set5<-test5
+# Make predictions on the test data. make sure to removove ID and year.
+test_set1$bvdidnumber<-NULL
+test_set1$year<-NULL
+test_set1<-model.matrix(export ~ .,test_set1)
+
+test_set2$bvdidnumber<-NULL
+test_set2$year<-NULL
+test_set2<-model.matrix(export ~ .,test_set2)
+
+test_set3$bvdidnumber<-NULL
+test_set3$year<-NULL
+test_set3<-model.matrix(export ~ .,test_set3)
+
+test_set4$bvdidnumber<-NULL
+test_set4$year<-NULL
+test_set4<-model.matrix(export ~ .,test_set4)
+
+test_set5$bvdidnumber<-NULL
+test_set5$year<-NULL
+test_set5<-model.matrix(export ~ .,test_set5)
+
+test1$lasso.prob <- predict(lasso.reg1, newdata=test_set1)
+test2$lasso.prob  <- predict(lasso.reg2, newdata=test_set2)
+test3$lasso.prob  <- predict(lasso.reg3, newdata=test_set3)
+test4$lasso.prob  <- predict(lasso.reg4, newdata=test_set4)
+test5$lasso.prob  <- predict(lasso.reg5, newdata=test_set5)
+
+test1$lasso.pred <- ifelse(test1$lasso.prob > 0.5, 1, 0)
+test2$lasso.pred <- ifelse(test2$lasso.prob > 0.5, 1, 0)
+test3$lasso.pred <- ifelse(test3$lasso.prob > 0.5, 1, 0)
+test4$lasso.pred <- ifelse(test4$lasso.prob > 0.5, 1, 0)
+test5$lasso.pred <- ifelse(test5$lasso.prob > 0.5, 1, 0)
+```
+
+### Evaluate Post-lasso:
+Confusion Matrix
+```{r}
+cm1=confusionMatrix(data = as.factor(test1$lasso.pred),
+                reference = as.factor(test1$export),positive = "1")
+
+cm2=confusionMatrix(data = as.factor(test2$lasso.pred),
+                reference = as.factor(test2$export),positive = "1")
+cm3=confusionMatrix(data = as.factor(test3$lasso.pred),
+                reference = as.factor(test3$export),positive = "1")
+cm4=confusionMatrix(data = as.factor(test4$lasso.pred),
+                reference = as.factor(test4$export),positive = "1")
+
+cm5=confusionMatrix(data = as.factor(test5$lasso.pred),
+                reference = as.factor(test5$export),positive = "1")
+```
+Generate a Table Summarizing the performance measures
+```{r}
+Lasso_Statistics<-data.frame(matrix(vector(), 4, 6,
+                dimnames=list(c(), c("Performance.Measure", "Sample1", "Sample2","Sample3","Sample4","Sample5"))),
+                stringsAsFactors=F)
+Lasso_Statistics$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+Lasso_Statistics$Sample1<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+Lasso_Statistics$Sample2<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+Lasso_Statistics$Sample3<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+Lasso_Statistics$Sample4<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+Lasso_Statistics$Sample5<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5)
+```
+ROC Curve
+```{r}
+roc_lasso1 <- roc.curve(scores.class0 =as.numeric(test1$lasso.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+roc_lasso2 <- roc.curve(scores.class0 =as.numeric(test2$lasso.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+roc_lasso3 <- roc.curve(scores.class0 =as.numeric(test3$lasso.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+roc_lasso4 <- roc.curve(scores.class0 =as.numeric(test4$lasso.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+roc_lasso5 <- roc.curve(scores.class0 =as.numeric(test5$lasso.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+roc<-c("ROC",roc_lasso1[["auc"]],roc_lasso2[["auc"]],roc_lasso3[["auc"]],roc_lasso4[["auc"]],roc_lasso5[["auc"]])
+
+Lasso_Statistics<-rbind(Lasso_Statistics,roc)
+rm(roc_lasso1,roc_lasso2,roc_lasso3,roc_lasso4,roc_lasso5,roc)
+```
+PR Curve
+```{r}
+pr_lasso1 <- pr.curve(scores.class0 =as.numeric(test1$lasso.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+
+pr_lasso2 <- pr.curve(scores.class0 =as.numeric(test2$lasso.prob),
+                     weights.class0 = as.numeric(test2$export),
+                     curve = T)
+
+pr_lasso3 <- pr.curve(scores.class0 =as.numeric(test3$lasso.prob),
+                     weights.class0 = as.numeric(test3$export),
+                     curve = T)
+
+pr_lasso4 <- pr.curve(scores.class0 =as.numeric(test4$lasso.prob),
+                     weights.class0 = as.numeric(test4$export),
+                     curve = T)
+
+pr_lasso5 <- pr.curve(scores.class0 =as.numeric(test5$lasso.prob),
+                     weights.class0 = as.numeric(test5$export),
+                     curve = T)
+
+pr<-c("PR",pr_lasso1[["auc.integral"]],pr_lasso2[["auc.integral"]],pr_lasso3[["auc.integral"]],pr_lasso4[["auc.integral"]],pr_lasso5[["auc.integral"]])
+
+Lasso_Statistics<-rbind(Lasso_Statistics,pr)
+rm(pr_lasso1,pr_lasso2,pr_lasso3,pr_lasso4,pr_lasso5)
+
+Lasso_Statistics[,c(2:6)] <- sapply(Lasso_Statistics[,c(2:6)],as.numeric)
+Lasso_Statistics=Lasso_Statistics %>% mutate_if(is.numeric, ~round(., 3))
+rm(lasso.reg1,lasso.reg2,lasso.reg3,lasso.reg4,lasso.reg5,test_set1,test_set2,test_set3,test_set4,test_set5,pr)
+
+```
+
+See the results:
+```{r Lasso stats final}
+Lasso_Statistics%>%
+  knitr::kable(digits = 4) %>%
+  kableExtra::kable_paper("hover", full_width = T)
+```
+
+## ROC and PR graphs
+```{r}
+roc_lasso <- roc.curve(scores.class0 =as.numeric(test1$lasso.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+pr_lasso <- pr.curve(scores.class0 =as.numeric(test1$lasso.prob),
+                     weights.class0 = as.numeric(test1$export),
+                     curve = T)
+plot(roc_lasso)
+plot(pr_lasso)
+```
+# Save the workspace
+```{r save}
+save.image(file="/Users/francescamicocci/Documents/Export_project/Data/data_ML_noNA.RData")
+results_no_na<-rbind.data.frame(test1,test2,test3,test4,test5)
+save(results_no_na,file="/Users/francescamicocci/Documents/Export_project/Data/results_no_na.RData")
+```
+
+Drop stuff that are not useful for next steps and save the data.
+```{r drop stuff}
+rm(BART_Statistics,CART_Statistics,data_ML,Lasso_Statistics,Logit_Statistics,RF_Statistics,test1,test2,test3,test4,test5,train1,train2,train3,train4,train5,i,roc_logit,pr_logit,roc_rf,pr_rf,roc_bart,pr_bart,roc_lasso,pr_lasso,results_no_na)
+save.image(file="/Users/francescamicocci/Documents/Export_project/Data/data_for_ML_BART_MIA.RData")
+```
+
+

@@ -1,0 +1,122 @@
+---
+title: "Prepare the Dataset for Machine Learning"
+author: "Francesca Micocci"
+date: "6/25/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_knit$set(root.dir ='/Users/francescamicocci/Documents/Export_project/Data/')
+```
+
+# Import 
+
+Import the required libraries
+```{r importr libraries, warning=FALSE,message=FALSE}
+library(scales)
+library(reshape2)
+library(questionr)
+library(ggridges)
+```
+
+Import data
+```{r import data}
+load('/Users/francescamicocci/Documents/Export_project/Data/data_R.RData')
+```
+
+# Study  the NA distribution
+
+As a first step, remove observations where Export is NA. Then check the ranking of variables in terms of missing values. This should help in identifying variables to be used as predictors for standard ML
+
+```{r freq NA}
+data<-data[which(!is.na(data$export)),]
+questionr::freq.na(data)
+```
+
+#Prepare the list of predictors
+
+Given the number of missings let us select a subset of relevant variables to be used for the machine learnign analysis and make sure to scale the continuous variables, while transforming the binary variables in factors.
+
+```{r data_preparation}
+#Divide the relevant covariates by type
+binary_variables_names<-c("cons_accounts","corp_cont","inward_FDI","outward_FDI","patents")
+cts_variables_names<-c("addedvalueeur","cashcashequivalenteur","cashfloweur","creditorseur","currentassetseur","currentliabilitieseur","debtorseur","depreciationamortizationeur","ebitdaeur","financialexpenseseur","financialrevenueeur","fixedassetseur","intangiblefixedassetseur","interestpaideur","loanseur","longtermdebteur","materialcostseur","noncurrentliabilitieseur","operatingrevenueturnovereur","shareholdersfundseur","solvencyratioassetbased","tangiblefixedassetseur","taxationeur","totalassetseur","wage","workingcapitaleur")
+other_variables_names<-c("age","ext_ec_scale","nace_2d","nuts2","size_age","spillover_nace","spillover_nuts","cap_adeq_ratio","capital_intensity","currentratio","financial_constraints","financial_sustainability","labour_productivity","liquidity_returns","liquidityratio","ICR","log_emp","markups","productive_capacity","profitability","TFP_acf")
+# Genreate a listo of all predictors
+pred_ML<-c(binary_variables_names,cts_variables_names,other_variables_names)
+
+# Extracting and scaling continuous variables
+scaled_cts <- scale(data[,cts_variables_names])
+
+# Extracting indicator variables
+binary_covariates <- data[,binary_variables_names]
+for(i in 1:5){
+  binary_covariates[,i]<-factor(binary_covariates[,i],levels=c("1","0"))
+}
+# Extracting other variables
+other_covariates<-data[,other_variables_names]
+
+#Generating the final dataset
+data_ML.n<-cbind(scaled_cts,binary_covariates,other_covariates,data[,c("export","bvdidnumber","year")])
+
+rm(scaled_cts,binary_covariates,other_covariates,cts_variables_names,binary_variables_names,other_variables_names)
+```
+
+Remove the observations presenting NAs in the selected variables in such subset and generate the formula to be used for logit and for some of the ML algorithms.
+
+```{r data and formulas}
+data_ML<-na.omit(data_ML.n)
+
+formula.logit<-(as.formula(paste("export ~", paste(pred_ML, collapse="+"))))  
+
+formula.ML <- as.formula(paste("as.factor(export) ~", paste(pred_ML, collapse="+")))
+```
+
+
+# Train and test selection
+First generate training and testing datasets by randomizing over entities. Generate 5 random partitions of the firms to be used as testing sets in the following ML analyses.
+
+```{r train and test}
+firms <- as.vector(data_ML[!duplicated(data_ML$bvdidnumber),]$bvdidnumber)
+
+set.seed(2021)
+ss <- sample(1:5,size=length(firms),replace=TRUE,prob=c(0.2,0.2,0.2,0.2,0.2))
+firms<-as.data.frame(cbind(firms,ss))
+testing_firms_1  <- firms[firms$ss==1,]$firms
+testing_firms_2  <- firms[firms$ss==2,]$firms
+testing_firms_3  <- firms[firms$ss==3,]$firms
+testing_firms_4  <- firms[firms$ss==4,]$firms
+testing_firms_5  <- firms[firms$ss==5,]$firms
+
+training_firms_1<-setdiff(firms$firms,testing_firms_1)
+training_firms_2<-setdiff(firms$firms,testing_firms_2)
+training_firms_3<-setdiff(firms$firms,testing_firms_3)
+training_firms_4<-setdiff(firms$firms,testing_firms_4)
+training_firms_5<-setdiff(firms$firms,testing_firms_5)
+
+
+train1<-subset(data_ML, bvdidnumber %in% training_firms_1)
+test1<-subset(data_ML, bvdidnumber %in% testing_firms_1)
+
+train2<-subset(data_ML, bvdidnumber %in% training_firms_2)
+test2<-subset(data_ML, bvdidnumber %in% testing_firms_2)
+
+train3<-subset(data_ML, bvdidnumber %in% training_firms_3)
+test3<-subset(data_ML, bvdidnumber %in% testing_firms_3)
+
+train4<-subset(data_ML, bvdidnumber %in% training_firms_4)
+test4<-subset(data_ML, bvdidnumber %in% testing_firms_4)
+
+train5<-subset(data_ML, bvdidnumber %in% training_firms_5)
+test5<-subset(data_ML, bvdidnumber %in% testing_firms_5)
+
+rm(ss,firms,training_firms_1,training_firms_2,training_firms_3,training_firms_4,training_firms_5,testing_firms_1,testing_firms_2,testing_firms_3,testing_firms_4,testing_firms_5)
+```
+
+# Export the workspace
+```{r save output}
+save.image(file = '/Users/francescamicocci/Documents/Export_project/Data/data_for_ML.RData')
+
+save(exporting_history,file='/Users/francescamicocci/Documents/Export_project/Data/exporting_history.RData')
+```
+

@@ -1,0 +1,206 @@
+---
+title: "Potential Exporters"
+author: "Francesca Micocci"
+date: "7/8/2021"
+output: html_document
+---
+
+# Libraries
+```{r libraries,message=FALSE,warning=FALSE}
+library(foreign)
+library(haven)
+library(reshape2)
+library(ggplot2)
+library(caret)
+library(knitr)
+library(kableExtra)
+library(PRROC)
+library(sf)
+library(tmap)
+library(scales)
+library(viridis)
+```
+
+1. Upload the data
+```{r upload files}
+rm(list=ls())
+load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
+final<-haven::read_dta("/Users/francescamicocci/Documents/Export_project/Data/final_cutoffs.dta")
+
+```
+
+# Potential Exporters
+Generate the subset of potential exporters, i.e.firms which are Non-exporters and were misclassified. 
+In particular, show the distribution of firms in probability class and identify  misclassified observations when we use the optimal probability threshold for the prediction of the **export status**.
+
+1. Generate probability classes
+```{r prob class}
+results$prob_class<-ifelse(results$bart_mia_prob<0.10,"0-0.9",ifelse(results$bart_mia_prob>=0.10&results$bart_mia_prob<0.20,"0.1-0.19",ifelse(results$bart_mia_prob>=0.20&results$bart_mia_prob<0.2797746,"0.2-0.28",ifelse(results$bart_mia_prob>=0.2797746&results$bart_mia_prob<0.40,"0.28-0.39",ifelse(results$bart_mia_prob>=0.40&results$bart_mia_prob<0.50,"0.4-0.49",ifelse(results$bart_mia_prob>=0.50&results$bart_mia_prob<0.60,"0.5-0.59",ifelse(results$bart_mia_prob>=0.60&results$bart_mia_prob<0.70,"0.6-0.69",ifelse(results$bart_mia_prob>=0.70&results$bart_mia_prob<0.80,"0.7-0.79",ifelse(results$bart_mia_prob>=0.80&results$bart_mia_prob<0.90,"0.8-0.89","0.9-1")))))))))
+```
+
+2. Generate the graph
+```{r misclassified ALL}
+results$bart_mia_pred_opt<-ifelse(results$bart_mia_prob>final$bart_mia_cutoff,1,0)
+results$classification<-ifelse(results$bart_mia_pred_opt==results$export,NA,"misclassified")
+
+results$export_status<-factor(results$export,levels=c("0","1"))
+
+p <- results %>%
+  ggplot( aes(x=prob_class, fill=export_status,color=classification)) +
+    geom_bar(linetype="dotted") +geom_vline(xintercept = 3.5,
+                color = "black", size=1,linetype="dashed")+ scale_colour_manual(values='black',na.translate=FALSE)+scale_fill_manual(values = c("grey87", "grey68")) +guides(color = guide_legend(override.aes = list(fill = "white"))) +
+    theme_bw()+labs(x="Probability class",color=" ")+scale_x_discrete(guide = guide_axis(angle = 45))
+  
+p
+```
+```{r misclassified type}
+results %>%
+  ggplot( aes(x=prob_class, fill=export_status,color=classification)) +
+    geom_bar(linetype="dotted") +geom_vline(xintercept = 3.5,
+                color = "black", size=1,linetype="dashed")+ scale_colour_manual(values='black',na.translate=FALSE)+scale_fill_manual(values = c("grey87", "grey68")) +guides(color = guide_legend(override.aes = list(fill = "white"))) +
+    theme_bw()+labs(x="Probability class",color=" ")+scale_x_discrete(guide = guide_axis(angle = 45))+facet_wrap(~ export_type)
+```
+Select observation which are predicted to be exporters when they are non-exporters.
+
+```{r potential_exp}
+potential_exporters<-subset(results, !is.na(results$classification)&results$export==0)
+```
+
+## NUTS
+Check the regional distribution and generate the table for Tableau containing n. of potential firms by region, n.of total firms by region, share of potential exporters out of total firms by region.
+
+```{r pot_exp by nuts non-exp}
+potential_exporters2<-as.data.frame(table(potential_exporters[potential_exporters$export_type=="Non-exporter",]$nuts2))
+names(potential_exporters2)[names(potential_exporters2) == "Freq"] <- "Potential exporter"
+
+firms_by_nuts<-as.data.frame(table(results[results$export_type=="Non-exporter",]$nuts2))
+names(firms_by_nuts)[names(firms_by_nuts) == "Freq"] <- "Total"
+table_final<-merge(potential_exporters2,firms_by_nuts,on="nuts2")
+table_final$`Share of potential exporters`<-(table_final$`Potential exporter`/table_final$Total)*100
+table_final=table_final[table_final$`Potential exporter`>0,]
+
+tot_firms<-sum(table_final$Total)
+tot_pot_exp<-sum(table_final$`Potential exporter`)
+total_share_pot_exp<-tot_pot_exp/tot_firms*100
+
+table_final$Loc_quot<-table_final$`Share of potential exporters`/total_share_pot_exp
+
+#write_xlsx(table_final,"/Users/francescamicocci/Documents/Export_project/potential_exporters.xlsx")
+rm(potential_exporters2,firms_by_nuts,tot_firms,tot_pot_exp,total_share_pot_exp)
+```
+Now produce a bar-plot with the location quotient
+```{r bars non-exp nuts, warning=FALSE,message=FALSE}
+ggplot(table_final, aes(y=Loc_quot, x=Var1)) + 
+    geom_bar(position="dodge", stat="identity",aes(fill=table_final$Loc_quot))+scale_x_discrete(guide = guide_axis(angle = 45))+geom_hline(yintercept=1, color='red')+scale_fill_gradient2(low="red",mid="white",high="chartreuse4",midpoint=1)+theme_bw()+labs(x="Nuts 2",y="location quotient",fill="Location Quotient")
+```
+Let us have a look at the map
+```{r maps non-exp, message=FALSE}
+Map <- read_sf("/Users/francescamicocci/Downloads/ref-nuts-2021-03m/NUTS_RG_03M_2021_3035_LEVL_2.shp/NUTS_RG_03M_2021_3035_LEVL_2.shp")
+Map<-subset(Map,Map$CNTR_CODE=="FR")
+
+Map<-merge(Map,table_final,by.x="NUTS_ID",by.y="Var1")
+Map$area<-ifelse(Map$NUTS_ID=="FRY5"|Map$NUTS_ID=="FRY4","African District",ifelse(Map$NUTS_ID=="FRY3"|Map$NUTS_ID=="FRY2"|Map$NUTS_ID=="FRY1","American District","European Continent"))
+
+
+tmap_mode("view")
+tmap_style("white")
+tm_shape(Map) +
+tm_polygons(col = "Loc_quot", midpoint = 1)+
+tm_text("NUTS_ID",size=1,col = "black") +
+tm_facets(by="area")+
+	tm_legend(outside=TRUE)
+```
+
+
+Control for exporter type
+
+```{r pot_exp_type}
+exp_type<-as.data.frame(table(potential_exporters$nuts2,potential_exporters$export_type))
+
+names(exp_type)[names(exp_type) == "Freq"] <- "Potential exporter"
+names(exp_type)[names(exp_type) == "Var1"] <- "nuts"
+names(exp_type)[names(exp_type) == "Var2"] <- "exp_type"
+
+firms_by_nuts_type<-as.data.frame(table(results$nuts2,results$export_type))
+names(firms_by_nuts_type)[names(firms_by_nuts_type) == "Freq"] <- "Total"
+names(firms_by_nuts_type)[names(firms_by_nuts_type) == "Var1"] <- "nuts"
+names(firms_by_nuts_type)[names(firms_by_nuts_type) == "Var2"] <- "exp_type"
+
+table_exp_type<-merge(exp_type,firms_by_nuts_type,on=c("Var1","Var2"))
+table_exp_type$`Share of potential exporters`<-(table_exp_type$`Potential exporter`/table_exp_type$Total)*100
+
+tot_firms<-aggregate(cbind(table_exp_type$Total,table_exp_type$`Potential exporter`), by=list(CategoRy=table_exp_type$exp_type),FUN=sum)
+colnames(tot_firms)<-c("exp_type","tot_firms","tot_pot_exp")
+tot_firms$total_share_pot_exp<-tot_firms$tot_pot_exp/tot_firms$tot_firms*100
+table_exp_type<-merge(table_exp_type,tot_firms,on="exp_type")
+
+table_exp_type$Loc_quot<-table_exp_type$`Share of potential exporters`/table_exp_type$total_share_pot_exp
+rm(exp_type,tot_firms,firms_by_nuts_type)
+```
+```{r}
+ggplot(na.omit(table_exp_type), aes(fill=exp_type, y=Loc_quot, x=nuts)) + 
+    geom_bar(position="dodge", stat="identity")+scale_x_discrete(guide = guide_axis(angle = 45))+geom_hline(yintercept=1, color='black')
+```
+
+## NACE
+Now do the same thing for Nace. Have a look at which industry **misclassified non exporters** belong to. 
+
+1. Generate a factor variable with description of the industry code
+```{r Nace}
+potential_exporters$Nace<-factor(potential_exporters$nace_2d,
+                        levels=c(10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32),
+                        labels = c("10: Food products","11: Beverages","13: Textiles","14: Wearing Apparel","15: Leather","16: Wood","17: Paper","18: Printing","19: Coke and refined petroleum","20: Chemicals","21: Pharmaceutical prod","22: Rubber and Plastic","23: Non-metallic mineral product","24: Basic metals","25: Fabricated metals","26: Computer, electronic and optical prod","27: Electrical equipment", "28: Machinery and equipment n.e.c.", "29: Motor vehicles","30: Other transportation",
+"31: Furniture",
+"32: Other manifacturing"))
+results$Nace<-factor(results$nace_2d,
+                        levels=c(10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32),
+                        labels = c("10: Food products","11: Beverages","13: Textiles","14: Wearing Apparel","15: Leather","16: Wood","17: Paper","18: Printing","19: Coke and refined petroleum","20: Chemicals","21: Pharmaceutical prod","22: Rubber and Plastic","23: Non-metallic mineral product","24: Basic metals","25: Fabricated metals","26: Computer, electronic and optical prod","27: Electrical equipment", "28: Machinery and equipment n.e.c.", "29: Motor vehicles","30: Other transportation",
+"31: Furniture",
+"32: Other manifacturing"))
+```
+
+2. Compute the shares
+```{r pot_exp by nace}
+firms_by_nace.pe<-as.data.frame(table(potential_exporters[potential_exporters$export_type=="Non-exporter",]$Nace))
+names(firms_by_nace.pe)[names(firms_by_nace.pe)=="Freq"]<-"pot_exp"
+firms_by_nace_tot<-as.data.frame(table(results[results$export_type=="Non-exporter",]$Nace))
+names(firms_by_nace_tot)[names(firms_by_nace_tot) == "Freq"] <- "Total"
+firms_by_nace.pe<-merge(firms_by_nace.pe,firms_by_nace_tot,on="Var1")
+firms_by_nace.pe$Percentage<-(firms_by_nace.pe$pot_exp/firms_by_nace.pe$Total)*100
+rm(firms_by_nace_tot)
+
+tot.firms<-sum(firms_by_nace.pe$Total)
+tot_pot_exp_nace<-sum(firms_by_nace.pe$pot_exp)
+
+share_pot_exp_tot<-tot_pot_exp_nace/tot.firms*100
+firms_by_nace.pe$Loc_quot<-firms_by_nace.pe$Percentage/share_pot_exp_tot
+
+rm(tot.firms,tot_pot_exp_nace,share_pot_exp_tot)
+```
+
+Now produce the graphs of 
+
+1. number of potential exporters (non-exporters classified as exporters) by Nace
+2. Share of potential exporters (non-exporters classified as exporters) out of total non-exporters by Nace
+
+```{r pot_exp by nace num,message=FALSE}
+ggplot(firms_by_nace.pe, aes( y=pot_exp, x=Var1)) + 
+  coord_flip()+geom_col(position="dodge") +
+  labs(title = "Number of Potential exporters by Nace rev.2", y = "Count", x = "Nace Rev.2",fill="Export Dummy")+theme_bw()+theme(legend.position="bottom")+scale_y_continuous(labels = comma_format(big.mark = ".",
+                                           decimal.mark = ","))+geom_text(aes(label = round(pot_exp, 2)),position = position_dodge(0.95),vjust = 0.5,hjust = -0.2,size=3)+expand_limits(y = 12000)
+```
+
+```{r pot_exp by nace share}
+ggplot(firms_by_nace.pe, aes( y=Percentage, x=Var1)) + 
+  coord_flip()+geom_col(position="dodge") +
+  labs(title = "Share of Potential exporters over total firms (in % pts)", y = "Percentage points", x = "Nace Rev.2")+theme_bw()+theme(legend.position="bottom")+scale_y_continuous(labels = comma_format(big.mark = ".",decimal.mark = ","))+geom_text(aes(label = round(Percentage, 2)),position = position_dodge(0.95),vjust = 0.5,hjust = -0.2,size=3)+ expand_limits(y = 50)
+```
+Looks like in some industries a very high share of non-exporters are classified as potential exporters. This is probably due to the fact that such industries are characterized by a generally high level of productivity and medium-large plant sizes, which the algorithm considers to be suitable to sustain exporting activity.
+
+```{r pot_exp by nace loc_quot,warning=FALSE}
+ggplot(firms_by_nace.pe, aes( y=Loc_quot, x=Var1,fill=Loc_quot)) + 
+  coord_flip()+geom_col(position="dodge") +
+  labs(title = "Locartion quotient by Nace", y = "Location quotient", x = "Nace Rev.2")+theme_bw()+theme(legend.position="bottom")+scale_y_continuous(labels = comma_format(big.mark = ".",decimal.mark = ","))+geom_text(aes(label = round(Loc_quot, 2)),position = position_dodge(0.95),vjust = 0.5,hjust = -0.2,size=3)+ expand_limits(y = 3.2)+geom_hline(yintercept=1,col="red")+scale_fill_gradient2(low="red",mid="white",high="chartreuse4",midpoint=1)
+```
+
+

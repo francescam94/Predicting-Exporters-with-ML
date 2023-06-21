@@ -1,0 +1,2835 @@
+---
+title: "Robustness Checks"
+author: "Francesca Micocci"
+date: "6/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import 
+
+Import the required libraries
+```{r libraries, warning=FALSE, message=FALSE}
+library(caret)
+library(PRROC)
+library(randomForest)
+library(rpart)
+library(hdm)
+library(dplyr)
+library(tidyverse)
+library(rpart.plot)
+library(kableExtra)
+library(reshape2)
+```
+
+Import data
+```{r load data}
+load('/Users/francescamicocci/Documents/Export_project/Data/data_for_ML.RData')
+rm(train1,train2,train3,train4,train5,test1,test2,test3,test4,test5,CART_Statistics,Logit_Statistics)
+load("/Users/francescamicocci/Documents/Export_project/Data/train1.m.RData")
+load("/Users/francescamicocci/Documents/Export_project/Data/test1.m.RData")
+```
+
+# Annual Effects
+
+We assumed in the benchmark that the characteristics of an exporters were similar in our-time span. As a result, we treated the panel as a cross section, where the same firm at different years corresponds to a different observation. 
+Now we check whether the exporter characteristics are time specific, thus meaning if training and testing on separate years might boost the prediction performance.
+
+## Prepare Training and testing for each year:
+```{r annual samples}
+set.seed(2021)
+training_firms_2011<-sample(data_ML[data_ML$year==2011,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2011,]$bvdidnumber)))
+train_2011<-subset(data_ML[data_ML$year==2011,],data_ML[data_ML$year==2011,]$bvdidnumber %in% training_firms_2011)
+test_2011<-subset(data_ML[data_ML$year==2011,],!(data_ML[data_ML$year==2011,]$bvdidnumber %in% training_firms_2011))
+
+training_firms_2012<-sample(data_ML[data_ML$year==2012,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2012,]$bvdidnumber)))
+train_2012<-subset(data_ML[data_ML$year==2012,],data_ML[data_ML$year==2012,]$bvdidnumber %in% training_firms_2012)
+test_2012<-subset(data_ML[data_ML$year==2012,],!(data_ML[data_ML$year==2012,]$bvdidnumber %in% training_firms_2012))
+
+training_firms_2013<-sample(data_ML[data_ML$year==2013,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2013,]$bvdidnumber)))
+train_2013<-subset(data_ML[data_ML$year==2013,],data_ML[data_ML$year==2013,]$bvdidnumber %in% training_firms_2013)
+test_2013<-subset(data_ML[data_ML$year==2013,],!(data_ML[data_ML$year==2013,]$bvdidnumber %in% training_firms_2013))
+
+training_firms_2014<-sample(data_ML[data_ML$year==2014,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2014,]$bvdidnumber)))
+train_2014<-subset(data_ML[data_ML$year==2014,],data_ML[data_ML$year==2014,]$bvdidnumber %in% training_firms_2014)
+test_2014<-subset(data_ML[data_ML$year==2014,],!(data_ML[data_ML$year==2014,]$bvdidnumber %in% training_firms_2014))
+
+training_firms_2015<-sample(data_ML[data_ML$year==2015,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2015,]$bvdidnumber)))
+train_2015<-subset(data_ML[data_ML$year==2015,],data_ML[data_ML$year==2015,]$bvdidnumber %in% training_firms_2015)
+test_2015<-subset(data_ML[data_ML$year==2015,],!(data_ML[data_ML$year==2015,]$bvdidnumber %in% training_firms_2015))
+
+training_firms_2016<-sample(data_ML[data_ML$year==2016,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2016,]$bvdidnumber)))
+train_2016<-subset(data_ML[data_ML$year==2016,],data_ML[data_ML$year==2016,]$bvdidnumber %in% training_firms_2016)
+test_2016<-subset(data_ML[data_ML$year==2016,],!(data_ML[data_ML$year==2016,]$bvdidnumber %in% training_firms_2016))
+
+training_firms_2017<-sample(data_ML[data_ML$year==2017,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2017,]$bvdidnumber)))
+train_2017<-subset(data_ML[data_ML$year==2017,],data_ML[data_ML$year==2017,]$bvdidnumber %in% training_firms_2017)
+test_2017<-subset(data_ML[data_ML$year==2017,],!(data_ML[data_ML$year==2017,]$bvdidnumber %in% training_firms_2017))
+
+training_firms_2018<-sample(data_ML[data_ML$year==2018,]$bvdidnumber,round(0.8*length(data_ML[data_ML$year==2018,]$bvdidnumber)))
+train_2018<-subset(data_ML[data_ML$year==2018,],data_ML[data_ML$year==2018,]$bvdidnumber %in% training_firms_2018)
+test_2018<-subset(data_ML[data_ML$year==2018,],!(data_ML[data_ML$year==2018,]$bvdidnumber %in% training_firms_2018))
+
+rm(training_firms_2011,training_firms_2012,training_firms_2013,training_firms_2014,training_firms_2015,training_firms_2016,training_firms_2017,training_firms_2018)
+```
+## Logit
+Run the Logit
+```{r logit, message=FALSE,warning=FALSE}
+set.seed(2021)
+logit_2011<-glm(formula.logit, data=test_2011,family="binomial")
+test_2011$logit.prob = predict(logit_2011, test_2011,type="response")
+test_2011$logit.pred = ifelse(test_2011$logit.prob>0.5,1,0)
+
+#NOte there are no firms with con_accounts=1, so we have to drop the var
+pred_ML2<-setdiff(pred_ML,c("cons_accounts"))
+formula.logit2<-as.formula(paste("export~",paste(pred_ML2,collapse="+")))
+logit_2012<-glm(formula.logit2, data=test_2012,family="binomial")
+test_2012$logit.prob = predict(logit_2012, test_2012,type="response")
+test_2012$logit.pred = ifelse(test_2012$logit.prob>0.5,1,0)
+
+
+logit_2013<-glm(formula.logit, data=test_2013,family="binomial")
+test_2013$logit.prob = predict(logit_2013, test_2013,type="response")
+test_2013$logit.pred = ifelse(test_2013$logit.prob>0.5,1,0)
+
+
+logit_2014<-glm(formula.logit, data=test_2014,family="binomial")
+test_2014$logit.prob = predict(logit_2014, test_2014,type="response")
+test_2014$logit.pred = ifelse(test_2014$logit.prob>0.5,1,0)
+
+
+logit_2015<-glm(formula.logit, data=test_2015,family="binomial")
+test_2015$logit.prob = predict(logit_2015, test_2015,type="response")
+test_2015$logit.pred = ifelse(test_2015$logit.prob>0.5,1,0)
+
+logit_2016<-glm(formula.logit, data=test_2016,family="binomial")
+test_2016$logit.prob = predict(logit_2016, test_2016,type="response")
+test_2016$logit.pred = ifelse(test_2016$logit.prob>0.5,1,0)
+
+logit_2017<-glm(formula.logit, data=test_2017,family="binomial")
+test_2017$logit.prob = predict(logit_2017, test_2017,type="response")
+test_2017$logit.pred = ifelse(test_2017$logit.prob>0.5,1,0)
+
+logit_2018<-glm(formula.logit, data=test_2018,family="binomial")
+test_2018$logit.prob = predict(logit_2018, test_2018,type="response")
+test_2018$logit.pred = ifelse(test_2018$logit.prob>0.5,1,0)
+
+rm(logit_2011,logit_2012,logit_2013,logit_2014,logit_2015,logit_2016,logit_2017,logit_2018,pred_ML2,formula.logit2)
+```
+
+### Evaluate the model 
+Generate the confusion Matrices
+```{r CM_logit}
+cm1=confusionMatrix(data = as.factor(test_2011$logit.pred),
+                reference = as.factor(test_2011$export),positive="1")
+
+cm2=confusionMatrix(data = as.factor(test_2012$logit.pred),
+                reference = as.factor(test_2012$export),positive="1")
+
+cm3=confusionMatrix(data = as.factor(test_2013$logit.pred),
+                reference = as.factor(test_2013$export),positive="1")
+
+cm4=confusionMatrix(data = as.factor(test_2014$logit.pred),
+                reference = as.factor(test_2014$export),positive="1")
+
+cm5=confusionMatrix(data = as.factor(test_2015$logit.pred),
+                reference = as.factor(test_2015$export),positive="1")
+
+cm6=confusionMatrix(data = as.factor(test_2016$logit.pred),
+                reference = as.factor(test_2016$export),positive="1")
+
+cm7=confusionMatrix(data = as.factor(test_2017$logit.pred),
+                reference = as.factor(test_2017$export),positive="1")
+
+cm8=confusionMatrix(data = as.factor(test_2018$logit.pred),
+                reference = as.factor(test_2018$export),positive="1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r Logit_Stats}
+Logit_Statistics_annual<-data.frame(matrix(vector(), 4, 9,
+                dimnames=list(c(), c("Performance.Measure", "year.2011", "year.2012","year.2013","year.2014","year.2015","year.2016","year.2017","year.2018"))),
+                stringsAsFactors=F)
+Logit_Statistics_annual$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+Logit_Statistics_annual$year.2011<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2012<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2013<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2014<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2015<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2016<-c(cm6[["overall"]][["Accuracy"]],cm6[["byClass"]][["Sensitivity"]],cm6[["byClass"]][["Specificity"]],cm6[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2017<-c(cm7[["overall"]][["Accuracy"]],cm7[["byClass"]][["Sensitivity"]],cm7[["byClass"]][["Specificity"]],cm7[["byClass"]][["Balanced Accuracy"]])
+
+Logit_Statistics_annual$year.2018<-c(cm8[["overall"]][["Accuracy"]],cm8[["byClass"]][["Sensitivity"]],cm8[["byClass"]][["Specificity"]],cm8[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8)
+```
+
+ROC Curve
+```{r ROC Logit}
+roc_logit_2011 <- roc.curve(scores.class0 =as.numeric(test_2011$logit.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+roc_logit_2012 <- roc.curve(scores.class0 =as.numeric(test_2012$logit.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+roc_logit_2013 <- roc.curve(scores.class0 =as.numeric(test_2013$logit.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+roc_logit_2014 <- roc.curve(scores.class0 =as.numeric(test_2014$logit.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+roc_logit_2015 <- roc.curve(scores.class0 =as.numeric(test_2015$logit.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+roc_logit_2016 <- roc.curve(scores.class0 =as.numeric(test_2016$logit.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+roc_logit_2017 <- roc.curve(scores.class0 =as.numeric(test_2017$logit.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+roc_logit_2018 <- roc.curve(scores.class0 =as.numeric(test_2018$logit.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+roc<-c("ROC",roc_logit_2011[["auc"]],roc_logit_2012[["auc"]],roc_logit_2013[["auc"]],roc_logit_2014[["auc"]],roc_logit_2015[["auc"]],roc_logit_2016[["auc"]],roc_logit_2017[["auc"]],roc_logit_2018[["auc"]])
+
+Logit_Statistics_annual<-rbind(Logit_Statistics_annual,roc)
+rm(roc_logit_2011,roc_logit_2012,roc_logit_2013,roc_logit_2014,roc_logit_2015,roc_logit_2016,roc_logit_2017,roc_logit_2018,roc)
+```
+PR Curve
+```{r PR Logit}
+pr_logit_2011 <- pr.curve(scores.class0 =as.numeric(test_2011$logit.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+pr_logit_2012 <- pr.curve(scores.class0 =as.numeric(test_2012$logit.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+pr_logit_2013 <- pr.curve(scores.class0 =as.numeric(test_2013$logit.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+pr_logit_2014 <- pr.curve(scores.class0 =as.numeric(test_2014$logit.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+pr_logit_2015 <- pr.curve(scores.class0 =as.numeric(test_2015$logit.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+pr_logit_2016 <- pr.curve(scores.class0 =as.numeric(test_2016$logit.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+pr_logit_2017 <- pr.curve(scores.class0 =as.numeric(test_2017$logit.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+pr_logit_2018 <- pr.curve(scores.class0 =as.numeric(test_2018$logit.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+pr<-c("PR",pr_logit_2011[["auc.integral"]],pr_logit_2012[["auc.integral"]],pr_logit_2013[["auc.integral"]],pr_logit_2014[["auc.integral"]],pr_logit_2015[["auc.integral"]],pr_logit_2016[["auc.integral"]],pr_logit_2017[["auc.integral"]],pr_logit_2018[["auc.integral"]])
+
+Logit_Statistics_annual<-rbind(Logit_Statistics_annual,pr)
+rm(pr_logit_2011,pr_logit_2012,pr_logit_2013,pr_logit_2014,pr_logit_2015,pr_logit_2016,pr_logit_2017,pr_logit_2018,pr)
+
+Logit_Statistics_annual[,c(2:9)] <- sapply(Logit_Statistics_annual[,c(2:9)],as.numeric)
+Logit_Statistics_annual=Logit_Statistics_annual %>% mutate_if(is.numeric, ~round(., 3))
+
+size_testing<-c("Size Sample",nrow(test_2011),nrow(test_2012),nrow(test_2013),nrow(test_2014),nrow(test_2015),nrow(test_2016),nrow(test_2017),nrow(test_2018))
+Logit_Statistics_annual<-rbind(Logit_Statistics_annual,size_testing)
+rm(size_testing)
+```
+See the results:
+```{r Logit Statistics, message=FALSE,warning=FALSE}
+#Trasnform the statistics in integers
+for (i in 2:9){
+  Logit_Statistics_annual[,i]<-as.numeric(Logit_Statistics_annual[,i])
+}
+Logit_Statistics_annual%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")%>%
+  kableExtra::row_spec(6, extra_css = "border-bottom: 1px solid;")
+```
+
+## CART
+```{r CART}
+rpart_2011 <- rpart(formula.ML, data=train_2011, method="class")
+test_2011$rpart <- predict(rpart_2011, newdata=test_2011,type='class')
+
+rpart_2012 <- rpart(formula.ML, data=train_2012, method="class")
+test_2012$rpart <- predict(rpart_2012, newdata=test_2012,type='class')
+
+rpart_2013 <- rpart(formula.ML, data=train_2013, method="class")
+test_2013$rpart <- predict(rpart_2013, newdata=test_2013,type='class')
+
+rpart_2014 <- rpart(formula.ML, data=train_2014, method="class")
+test_2014$rpart <- predict(rpart_2014, newdata=test_2014,type='class')
+
+rpart_2015 <- rpart(formula.ML, data=train_2015, method="class")
+test_2015$rpart <- predict(rpart_2015, newdata=test_2015,type='class')
+
+rpart_2016 <- rpart(formula.ML, data=train_2016, method="class")
+test_2016$rpart <- predict(rpart_2016, newdata=test_2016,type='class')
+
+rpart_2017 <- rpart(formula.ML, data=train_2017, method="class")
+test_2017$rpart <- predict(rpart_2017, newdata=test_2017,type='class')
+
+rpart_2018 <- rpart(formula.ML, data=train_2018, method="class")
+test_2018$rpart <- predict(rpart_2018, newdata=test_2018,type='class')
+
+rm(rpart_2011,rpart_2012,rpart_2013,rpart_2014,rpart_2015,rpart_2016,rpart_2017,rpart_2018)
+```
+
+### Evaluate the model 
+Generate the confusion Matrices
+```{r CM_CART}
+cm1=confusionMatrix(data = as.factor(test_2011$rpart),
+                reference = as.factor(test_2011$export),positive = "1")
+
+cm2=confusionMatrix(data = as.factor(test_2012$rpart),
+                reference = as.factor(test_2012$export),positive = "1")
+
+cm3=confusionMatrix(data = as.factor(test_2013$rpart),
+                reference = as.factor(test_2013$export),positive = "1")
+
+cm4=confusionMatrix(data = as.factor(test_2014$rpart),
+                reference = as.factor(test_2014$export),positive = "1")
+
+cm5=confusionMatrix(data = as.factor(test_2015$rpart),
+                reference = as.factor(test_2015$export),positive = "1")
+
+cm6=confusionMatrix(data = as.factor(test_2016$rpart),
+                reference = as.factor(test_2016$export),positive = "1")
+
+cm7=confusionMatrix(data = as.factor(test_2017$rpart),
+                reference = as.factor(test_2017$export),positive = "1")
+
+cm8=confusionMatrix(data = as.factor(test_2018$rpart),
+                reference = as.factor(test_2018$export),positive = "1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r CART_stats}
+Cart_Statistics_annual<-data.frame(matrix(vector(), 5, 9,
+                dimnames=list(c(), c("Performance.Measure", "year.2011", "year.2012","year.2013","year.2014","year.2015","year.2016","year.2017","year.2018"))),
+                stringsAsFactors=F)
+Cart_Statistics_annual$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy","Num.Obs.")
+
+Cart_Statistics_annual$year.2011<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]],nrow(test_2011))
+
+Cart_Statistics_annual$year.2012<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]],nrow(test_2012))
+
+Cart_Statistics_annual$year.2013<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]],nrow(test_2013))
+
+Cart_Statistics_annual$year.2014<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]],nrow(test_2014))
+
+Cart_Statistics_annual$year.2015<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]],nrow(test_2015))
+
+Cart_Statistics_annual$year.2016<-c(cm6[["overall"]][["Accuracy"]],cm6[["byClass"]][["Sensitivity"]],cm6[["byClass"]][["Specificity"]],cm6[["byClass"]][["Balanced Accuracy"]],nrow(test_2016))
+
+Cart_Statistics_annual$year.2017<-c(cm7[["overall"]][["Accuracy"]],cm7[["byClass"]][["Sensitivity"]],cm7[["byClass"]][["Specificity"]],cm7[["byClass"]][["Balanced Accuracy"]],nrow(test_2017))
+
+Cart_Statistics_annual$year.2018<-c(cm8[["overall"]][["Accuracy"]],cm8[["byClass"]][["Sensitivity"]],cm8[["byClass"]][["Specificity"]],cm8[["byClass"]][["Balanced Accuracy"]],nrow(test_2018))
+
+rm(cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8)
+```
+See the results:
+```{r}
+for (i in 2:9){
+  Cart_Statistics_annual[,i]<-as.numeric(Cart_Statistics_annual[,i])
+}
+Cart_Statistics_annual%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")%>%
+  kableExtra::row_spec(4, extra_css = "border-bottom: 1px solid;")
+
+```
+
+## SERVER!
+Save data to be used locally.
+```{r save train test}
+save(train_2011,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2011.RData")
+save(test_2011,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2011.RData")
+save(train_2012,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2012.RData")
+save(test_2012,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2012.RData")
+save(train_2013,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2013.RData")
+save(test_2013,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2013.RData")
+save(train_2014,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2014.RData")
+save(test_2014,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2014.RData")
+save(train_2015,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2015.RData")
+save(test_2015,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2015.RData")
+save(train_2016,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2016.RData")
+save(test_2016,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2016.RData")
+save(train_2017,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2017.RData")
+save(test_2017,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2017.RData")
+save(train_2018,file= "/Users/francescamicocci/Documents/Export_project/Data/train_2018.RData")
+save(test_2018,file= "/Users/francescamicocci/Documents/Export_project/Data/test_2018.RData")
+save(formula.ML,file= "/Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData")
+```
+
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2011.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2011.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2012.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2012.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2013.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2013.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2014.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2014.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2015.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2015.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2016.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2016.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2017.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2017.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2018.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2018.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/formula.ML.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+## Random Forest
+### Sample 2011
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2011.RData")
+load("/home/francesca.micocci/Export_project/test_2011.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2011 <- randomForest(formula.ML, data=train_2011, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2011 <- predict(rf_2011, test_2011,type='prob')
+fitted.prob_2011<-fitted.prob_2011[,2]
+save(fitted.prob_2011,file="/home/francesca.micocci/Export_project/fitted.prob_2011.RData")
+```
+### Sample 2012
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2012.RData")
+load("/home/francesca.micocci/Export_project/test_2012.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2012 <- randomForest(formula.ML, data=train_2012, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2012 <- predict(rf_2012, test_2012,type='prob')
+fitted.prob_2012<-fitted.prob_2012[,2]
+save(fitted.prob_2012,file="/home/francesca.micocci/Export_project/fitted.prob_2012.RData")
+```
+### Sample 2013
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2013.RData")
+load("/home/francesca.micocci/Export_project/test_2013.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2013 <- randomForest(formula.ML, data=train_2013, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2013 <- predict(rf_2013, test_2013,type='prob')
+fitted.prob_2013<-fitted.prob_2013[,2]
+save(fitted.prob_2013,file="/home/francesca.micocci/Export_project/fitted.prob_2013.RData")
+```
+### Sample 2014
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2014.RData")
+load("/home/francesca.micocci/Export_project/test_2014.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2014 <- randomForest(formula.ML, data=train_2014, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2014 <- predict(rf_2014, test_2014,type='prob')
+fitted.prob_2014<-fitted.prob_2014[,2]
+save(fitted.prob_2014,file="/home/francesca.micocci/Export_project/fitted.prob_2014.RData")
+```
+### Sample 2015
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2015.RData")
+load("/home/francesca.micocci/Export_project/test_2015.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2015 <- randomForest(formula.ML, data=train_2015, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2015 <- predict(rf_2015, test_2015,type='prob')
+fitted.prob_2015<-fitted.prob_2015[,2]
+save(fitted.prob_2015,file="/home/francesca.micocci/Export_project/fitted.prob_2015.RData")
+```
+### Sample 2016
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2016.RData")
+load("/home/francesca.micocci/Export_project/test_2016.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2016 <- randomForest(formula.ML, data=train_2016, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2016 <- predict(rf_2016, test_2016,type='prob')
+fitted.prob_2016<-fitted.prob_2016[,2]
+save(fitted.prob_2016,file="/home/francesca.micocci/Export_project/fitted.prob_2016.RData")
+```
+
+### Sample 2017
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2017.RData")
+load("/home/francesca.micocci/Export_project/test_2017.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2017 <- randomForest(formula.ML, data=train_2017, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2017 <- predict(rf_2017, test_2017,type='prob')
+fitted.prob_2017<-fitted.prob_2017[,2]
+save(fitted.prob_2017,file="/home/francesca.micocci/Export_project/fitted.prob_2017.RData")
+```
+### Sample 2018
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2018.RData")
+load("/home/francesca.micocci/Export_project/test_2018.RData")
+load("/home/francesca.micocci/Export_project/formula.ML.RData")
+```
+Compute the model
+```{}
+library(randomForest)
+set.seed(2021)
+rf_2018 <- randomForest(formula.ML, data=train_2018, importance=TRUE, ntree = 300, mtry = 7)
+fitted.prob_2018 <- predict(rf_2018, test_2018,type='prob')
+fitted.prob_2018<-fitted.prob_2018[,2]
+save(fitted.prob_2018,file="/home/francesca.micocci/Export_project/fitted.prob_2018.RData")
+```
+Download the results locally
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2011.RData /Users/francescamicocci/Documents/Server/fitted.prob_2011.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2012.RData /Users/francescamicocci/Documents/Server/fitted.prob_2012.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2013.RData /Users/francescamicocci/Documents/Server/fitted.prob_2013.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2014.RData /Users/francescamicocci/Documents/Server/fitted.prob_2014.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2015.RData /Users/francescamicocci/Documents/Server/fitted.prob_2015.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2016.RData /Users/francescamicocci/Documents/Server/fitted.prob_2016.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2017.RData /Users/francescamicocci/Documents/Server/fitted.prob_2017.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/fitted.prob_2018.RData /Users/francescamicocci/Documents/Server/fitted.prob_2018.RData
+KQyVZQ9v3uL
+```
+Load the predictions
+```{r load prob_predictions RF}
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2011.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2012.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2013.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2014.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2015.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2016.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2017.RData")
+load("/Users/francescamicocci/Documents/Server/fitted.prob_2018.RData")
+```
+Generate the predictions
+
+```{r Generate predictions RF}
+test_2011$rf.prob<-as.numeric(fitted.prob_2011)
+test_2012$rf.prob<-as.numeric(fitted.prob_2012)
+test_2013$rf.prob<-as.numeric(fitted.prob_2013)
+test_2014$rf.prob<-as.numeric(fitted.prob_2014)
+test_2015$rf.prob<-as.numeric(fitted.prob_2015)
+test_2016$rf.prob<-as.numeric(fitted.prob_2016)
+test_2017$rf.prob<-as.numeric(fitted.prob_2017)
+test_2018$rf.prob<-as.numeric(fitted.prob_2018)
+
+rm(fitted.prob_2011,fitted.prob_2012,fitted.prob_2013,fitted.prob_2014,fitted.prob_2015,fitted.prob_2016,fitted.prob_2017,fitted.prob_2018)
+
+test_2011$rf.pred<-ifelse(test_2011$rf.prob>0.5,1,0)
+test_2012$rf.pred<-ifelse(test_2012$rf.prob>0.5,1,0)
+test_2013$rf.pred<-ifelse(test_2013$rf.prob>0.5,1,0)
+test_2014$rf.pred<-ifelse(test_2014$rf.prob>0.5,1,0)
+test_2015$rf.pred<-ifelse(test_2015$rf.prob>0.5,1,0)
+test_2016$rf.pred<-ifelse(test_2016$rf.prob>0.5,1,0)
+test_2017$rf.pred<-ifelse(test_2017$rf.prob>0.5,1,0)
+test_2018$rf.pred<-ifelse(test_2018$rf.prob>0.5,1,0)
+```
+### Evaluate prediction quality
+Generate the confusion Matrices
+```{r CM_RF}
+cm1=confusionMatrix(data = as.factor(test_2011$rf.pred),
+                reference = as.factor(test_2011$export),positive = "1")
+
+cm2=confusionMatrix(data = as.factor(test_2012$rf.pred),
+                reference = as.factor(test_2012$export),positive = "1")
+
+cm3=confusionMatrix(data = as.factor(test_2013$rf.pred),
+                reference = as.factor(test_2013$export),positive = "1")
+
+cm4=confusionMatrix(data = as.factor(test_2014$rf.pred),
+                reference = as.factor(test_2014$export),positive = "1")
+
+cm5=confusionMatrix(data = as.factor(test_2015$rf.pred),
+                reference = as.factor(test_2015$export),positive = "1")
+
+cm6=confusionMatrix(data = as.factor(test_2016$rf.pred),
+                reference = as.factor(test_2016$export),positive = "1")
+
+cm7=confusionMatrix(data = as.factor(test_2017$rf.pred),
+                reference = as.factor(test_2017$export),positive = "1")
+
+cm8=confusionMatrix(data = as.factor(test_2018$rf.pred),
+                reference = as.factor(test_2018$export),positive = "1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r RF_stats}
+RF_Statistics_annual<-data.frame(matrix(vector(), 4, 9,
+                dimnames=list(c(), c("Performance.Measure", "year.2011", "year.2012","year.2013","year.2014","year.2015","year.2016","year.2017","year.2018"))),
+                stringsAsFactors=F)
+RF_Statistics_annual$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+RF_Statistics_annual$year.2011<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2012<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2013<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2014<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2015<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2016<-c(cm6[["overall"]][["Accuracy"]],cm6[["byClass"]][["Sensitivity"]],cm6[["byClass"]][["Specificity"]],cm6[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2017<-c(cm7[["overall"]][["Accuracy"]],cm7[["byClass"]][["Sensitivity"]],cm7[["byClass"]][["Specificity"]],cm7[["byClass"]][["Balanced Accuracy"]])
+
+RF_Statistics_annual$year.2018<-c(cm8[["overall"]][["Accuracy"]],cm8[["byClass"]][["Sensitivity"]],cm8[["byClass"]][["Specificity"]],cm8[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8)
+```
+
+ROC Curve
+```{r ROC RF}
+roc_rf_2011 <- roc.curve(scores.class0 =as.numeric(test_2011$rf.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+roc_rf_2012 <- roc.curve(scores.class0 =as.numeric(test_2012$rf.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+roc_rf_2013 <- roc.curve(scores.class0 =as.numeric(test_2013$rf.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+roc_rf_2014 <- roc.curve(scores.class0 =as.numeric(test_2014$rf.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+roc_rf_2015 <- roc.curve(scores.class0 =as.numeric(test_2015$rf.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+roc_rf_2016 <- roc.curve(scores.class0 =as.numeric(test_2016$rf.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+roc_rf_2017 <- roc.curve(scores.class0 =as.numeric(test_2017$rf.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+roc_rf_2018 <- roc.curve(scores.class0 =as.numeric(test_2018$rf.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+roc<-c("ROC",roc_rf_2011[["auc"]],roc_rf_2012[["auc"]],roc_rf_2013[["auc"]],roc_rf_2014[["auc"]],roc_rf_2015[["auc"]],roc_rf_2016[["auc"]],roc_rf_2017[["auc"]],roc_rf_2018[["auc"]])
+
+RF_Statistics_annual<-rbind(RF_Statistics_annual,roc)
+rm(roc_rf_2011,roc_rf_2012,roc_rf_2013,roc_rf_2014,roc_rf_2015,roc_rf_2016,roc_rf_2017,roc_rf_2018,roc)
+```
+PR Curve
+```{r PR RF}
+pr_rf_2011 <- pr.curve(scores.class0 =as.numeric(test_2011$rf.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+pr_rf_2012 <- pr.curve(scores.class0 =as.numeric(test_2012$rf.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+pr_rf_2013 <- pr.curve(scores.class0 =as.numeric(test_2013$rf.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+pr_rf_2014 <- pr.curve(scores.class0 =as.numeric(test_2014$rf.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+pr_rf_2015 <- pr.curve(scores.class0 =as.numeric(test_2015$rf.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+pr_rf_2016 <- pr.curve(scores.class0 =as.numeric(test_2016$rf.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+pr_rf_2017 <- pr.curve(scores.class0 =as.numeric(test_2017$rf.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+pr_rf_2018 <- pr.curve(scores.class0 =as.numeric(test_2018$rf.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+pr<-c("PR",pr_rf_2011[["auc.integral"]],pr_rf_2012[["auc.integral"]],pr_rf_2013[["auc.integral"]],pr_rf_2014[["auc.integral"]],pr_rf_2015[["auc.integral"]],pr_rf_2016[["auc.integral"]],pr_rf_2017[["auc.integral"]],pr_rf_2018[["auc.integral"]])
+
+RF_Statistics_annual<-rbind(RF_Statistics_annual,pr)
+rm(pr_rf_2011,pr_rf_2012,pr_rf_2013,pr_rf_2014,pr_rf_2015,pr_rf_2016,pr_rf_2017,pr_rf_2018,pr)
+
+RF_Statistics_annual[,c(2:9)] <- sapply(RF_Statistics_annual[,c(2:9)],as.numeric)
+RF_Statistics_annual=RF_Statistics_annual %>% mutate_if(is.numeric, ~round(., 3))
+
+size_testing<-c("Num.Obs.",nrow(test_2011),nrow(test_2012),nrow(test_2013),nrow(test_2014),nrow(test_2015),nrow(test_2016),nrow(test_2017),nrow(test_2018))
+RF_Statistics_annual<-rbind(RF_Statistics_annual,size_testing)
+rm(size_testing)
+```
+See the results:
+```{r RF stats final}
+RF_Statistics_annual%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")%>%
+  kableExtra::row_spec(6, extra_css = "border-bottom: 1px solid;")
+```
+
+## BART
+### Sample 2011
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2011.RData")
+load("/home/francesca.micocci/Export_project/test_2011.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2011$export,levels=c("1","0"))
+X<-as.data.frame(train_2011)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2011$export<-NULL
+test_2011$bvdidnumber<-NULL
+test_2011$year<-NULL
+test_2011$logit.prob<-NULL
+test_2011$logit.pred<-NULL
+test_2011$rpart<-NULL
+test_2011$rf.prob<-NULL
+test_2011$rf.pred<-NULL
+
+bart_machine.fitted_2011<-predict(bart_machine, test_2011,type="prob")
+save(bart_machine.fitted_2011,file="/home/francesca.micocci/Export_project/bart.fitted_2011.RData")
+
+```
+### Sample 2012
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2012.RData")
+load("/home/francesca.micocci/Export_project/test_2012.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2012$export,levels=c("1","0"))
+X<-as.data.frame(train_2012)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2012$export<-NULL
+test_2012$bvdidnumber<-NULL
+test_2012$year<-NULL
+test_2012$logit.prob<-NULL
+test_2012$logit.pred<-NULL
+test_2012$rpart<-NULL
+test_2012$rf.prob<-NULL
+test_2012$rf.pred<-NULL
+
+bart_machine.fitted_2012<-predict(bart_machine, test_2012,type="prob")
+save(bart_machine.fitted_2012,file="/home/francesca.micocci/Export_project/bart.fitted_2012.RData")
+
+```
+### Sample 2013
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2013.RData")
+load("/home/francesca.micocci/Export_project/test_2013.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2013$export,levels=c("1","0"))
+X<-as.data.frame(train_2013)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2013$export<-NULL
+test_2013$bvdidnumber<-NULL
+test_2013$year<-NULL
+test_2013$logit.prob<-NULL
+test_2013$logit.pred<-NULL
+test_2013$rpart<-NULL
+test_2013$rf.prob<-NULL
+test_2013$rf.pred<-NULL
+
+bart_machine.fitted_2013<-predict(bart_machine, test_2013,type="prob")
+save(bart_machine.fitted_2013,file="/home/francesca.micocci/Export_project/bart.fitted_2013.RData")
+
+```
+### Sample 2014
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2014.RData")
+load("/home/francesca.micocci/Export_project/test_2014.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2014$export,levels=c("1","0"))
+X<-as.data.frame(train_2014)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2014$export<-NULL
+test_2014$bvdidnumber<-NULL
+test_2014$year<-NULL
+test_2014$logit.prob<-NULL
+test_2014$logit.pred<-NULL
+test_2014$rpart<-NULL
+test_2014$rf.prob<-NULL
+test_2014$rf.pred<-NULL
+
+bart_machine.fitted_2014<-predict(bart_machine, test_2014,type="prob")
+save(bart_machine.fitted_2014,file="/home/francesca.micocci/Export_project/bart.fitted_2014.RData")
+
+```
+### Sample 2015
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2015.RData")
+load("/home/francesca.micocci/Export_project/test_2015.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2015$export,levels=c("1","0"))
+X<-as.data.frame(train_2015)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2015$export<-NULL
+test_2015$bvdidnumber<-NULL
+test_2015$year<-NULL
+test_2015$logit.prob<-NULL
+test_2015$logit.pred<-NULL
+test_2015$rpart<-NULL
+test_2015$rf.prob<-NULL
+test_2015$rf.pred<-NULL
+
+bart_machine.fitted_2015<-predict(bart_machine, test_2015,type="prob")
+save(bart_machine.fitted_2015,file="/home/francesca.micocci/Export_project/bart.fitted_2015.RData")
+
+```
+### Sample 2016
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2016.RData")
+load("/home/francesca.micocci/Export_project/test_2016.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2016$export,levels=c("1","0"))
+X<-as.data.frame(train_2016)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2016$export<-NULL
+test_2016$bvdidnumber<-NULL
+test_2016$year<-NULL
+test_2016$logit.prob<-NULL
+test_2016$logit.pred<-NULL
+test_2016$rpart<-NULL
+test_2016$rf.prob<-NULL
+test_2016$rf.pred<-NULL
+
+bart_machine.fitted_2016<-predict(bart_machine, test_2016,type="prob")
+save(bart_machine.fitted_2016,file="/home/francesca.micocci/Export_project/bart.fitted_2016.RData")
+
+```
+### Sample 2017
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2017.RData")
+load("/home/francesca.micocci/Export_project/test_2017.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2017$export,levels=c("1","0"))
+X<-as.data.frame(train_2017)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2017$export<-NULL
+test_2017$bvdidnumber<-NULL
+test_2017$year<-NULL
+test_2017$logit.prob<-NULL
+test_2017$logit.pred<-NULL
+test_2017$rpart<-NULL
+test_2017$rf.prob<-NULL
+test_2017$rf.pred<-NULL
+
+bart_machine.fitted_2017<-predict(bart_machine, test_2017,type="prob")
+save(bart_machine.fitted_2017,file="/home/francesca.micocci/Export_project/bart.fitted_2017.RData")
+
+```
+### Sample 2018
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+load("/home/francesca.micocci/Export_project/train_2018.RData")
+load("/home/francesca.micocci/Export_project/test_2018.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2018$export,levels=c("1","0"))
+X<-as.data.frame(train_2018)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2018$export<-NULL
+test_2018$bvdidnumber<-NULL
+test_2018$year<-NULL
+test_2018$logit.prob<-NULL
+test_2018$logit.pred<-NULL
+test_2018$rpart<-NULL
+test_2018$rf.prob<-NULL
+test_2018$rf.pred<-NULL
+
+bart_machine.fitted_2018<-predict(bart_machine, test_2018,type="prob")
+save(bart_machine.fitted_2018,file="/home/francesca.micocci/Export_project/bart.fitted_2018.RData")
+
+```
+### Download predictions
+Close R and Terminal. Then Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2011.RData /Users/francescamicocci/Documents/Server/bart.fitted_2011.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2012.RData /Users/francescamicocci/Documents/Server/bart.fitted_2012.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2013.RData /Users/francescamicocci/Documents/Server/bart.fitted_2013.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2014.RData /Users/francescamicocci/Documents/Server/bart.fitted_2014.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2015.RData /Users/francescamicocci/Documents/Server/bart.fitted_2015.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2016.RData /Users/francescamicocci/Documents/Server/bart.fitted_2016.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2017.RData /Users/francescamicocci/Documents/Server/bart.fitted_2017.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2018.RData /Users/francescamicocci/Documents/Server/bart.fitted_2018.RData
+KQyVZQ9v3uL
+```
+
+### Evaluate BART
+Now proceed with the predictions based on BART.
+```{r load pred prob BART}
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2011.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2012.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2013.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2014.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2015.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2016.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2017.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2018.RData")
+
+test_2011$bart.prob<-(bart_machine.fitted_2011)
+test_2012$bart.prob<-(bart_machine.fitted_2012)
+test_2013$bart.prob<-(bart_machine.fitted_2013)
+test_2014$bart.prob<-(bart_machine.fitted_2014)
+test_2015$bart.prob<-(bart_machine.fitted_2015)
+test_2016$bart.prob<-(bart_machine.fitted_2016)
+test_2017$bart.prob<-(bart_machine.fitted_2017)
+test_2018$bart.prob<-(bart_machine.fitted_2018)
+
+rm(bart_machine.fitted_2011,bart_machine.fitted_2012,bart_machine.fitted_2013,bart_machine.fitted_2014,bart_machine.fitted_2015,bart_machine.fitted_2016,bart_machine.fitted_2017,bart_machine.fitted_2018)
+
+```
+Generate the predictions
+```{r gen pred BART}
+test_2011$bart.pred<-ifelse(test_2011$bart.prob>0.5,1,0)
+test_2012$bart.pred<-ifelse(test_2012$bart.prob>0.5,1,0)
+test_2013$bart.pred<-ifelse(test_2013$bart.prob>0.5,1,0)
+test_2014$bart.pred<-ifelse(test_2014$bart.prob>0.5,1,0)
+test_2015$bart.pred<-ifelse(test_2015$bart.prob>0.5,1,0)
+test_2016$bart.pred<-ifelse(test_2016$bart.prob>0.5,1,0)
+test_2017$bart.pred<-ifelse(test_2017$bart.prob>0.5,1,0)
+test_2018$bart.pred<-ifelse(test_2018$bart.prob>0.5,1,0)
+```
+
+Generate the confusion Matrices
+```{r CM BART}
+cm1=confusionMatrix(data = as.factor(test_2011$bart.pred),
+                reference = as.factor(test_2011$export),positive="1")
+
+cm2=confusionMatrix(data = as.factor(test_2012$bart.pred),
+                reference = as.factor(test_2012$export),positive="1")
+
+cm3=confusionMatrix(data = as.factor(test_2013$bart.pred),
+                reference = as.factor(test_2013$export),positive="1")
+
+cm4=confusionMatrix(data = as.factor(test_2014$bart.pred),
+                reference = as.factor(test_2014$export),positive="1")
+
+cm5=confusionMatrix(data = as.factor(test_2015$bart.pred),
+                reference = as.factor(test_2015$export),positive="1")
+
+cm6=confusionMatrix(data = as.factor(test_2016$bart.pred),
+                reference = as.factor(test_2016$export),positive="1")
+
+cm7=confusionMatrix(data = as.factor(test_2017$bart.pred),
+                reference = as.factor(test_2017$export),positive="1")
+
+cm8=confusionMatrix(data = as.factor(test_2018$bart.pred),
+                reference = as.factor(test_2018$export),positive="1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r BART stats}
+Bart_Statistics_annual<-data.frame(matrix(vector(), 4, 9,
+                dimnames=list(c(), c("PeBartormance.Measure", "year.2011", "year.2012","year.2013","year.2014","year.2015","year.2016","year.2017","year.2018"))),
+                stringsAsFactors=F)
+Bart_Statistics_annual$PeBartormance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+Bart_Statistics_annual$year.2011<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2012<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2013<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2014<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2015<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2016<-c(cm6[["overall"]][["Accuracy"]],cm6[["byClass"]][["Sensitivity"]],cm6[["byClass"]][["Specificity"]],cm6[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2017<-c(cm7[["overall"]][["Accuracy"]],cm7[["byClass"]][["Sensitivity"]],cm7[["byClass"]][["Specificity"]],cm7[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Statistics_annual$year.2018<-c(cm8[["overall"]][["Accuracy"]],cm8[["byClass"]][["Sensitivity"]],cm8[["byClass"]][["Specificity"]],cm8[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8)
+```
+
+ROC Curve
+```{r ROC BART}
+roc_bart_2011 <- roc.curve(scores.class0 =as.numeric(test_2011$bart.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+roc_bart_2012 <- roc.curve(scores.class0 =as.numeric(test_2012$bart.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+roc_bart_2013 <- roc.curve(scores.class0 =as.numeric(test_2013$bart.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+roc_bart_2014 <- roc.curve(scores.class0 =as.numeric(test_2014$bart.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+roc_bart_2015 <- roc.curve(scores.class0 =as.numeric(test_2015$bart.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+roc_bart_2016 <- roc.curve(scores.class0 =as.numeric(test_2016$bart.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+roc_bart_2017 <- roc.curve(scores.class0 =as.numeric(test_2017$bart.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+roc_bart_2018 <- roc.curve(scores.class0 =as.numeric(test_2018$bart.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+roc<-c("ROC",roc_bart_2011[["auc"]],roc_bart_2012[["auc"]],roc_bart_2013[["auc"]],roc_bart_2014[["auc"]],roc_bart_2015[["auc"]],roc_bart_2016[["auc"]],roc_bart_2017[["auc"]],roc_bart_2018[["auc"]])
+
+Bart_Statistics_annual<-rbind(Bart_Statistics_annual,roc)
+rm(roc_bart_2011,roc_bart_2012,roc_bart_2013,roc_bart_2014,roc_bart_2015,roc_bart_2016,roc_bart_2017,roc_bart_2018,roc)
+```
+PR Curve
+```{r PR BART}
+pr_bart_2011 <- pr.curve(scores.class0 =as.numeric(test_2011$bart.prob),
+                     weights.class0 = as.numeric(test_2011$export),
+                     curve = T)
+
+pr_bart_2012 <- pr.curve(scores.class0 =as.numeric(test_2012$bart.prob),
+                     weights.class0 = as.numeric(test_2012$export),
+                     curve = T)
+
+pr_bart_2013 <- pr.curve(scores.class0 =as.numeric(test_2013$bart.prob),
+                     weights.class0 = as.numeric(test_2013$export),
+                     curve = T)
+
+pr_bart_2014 <- pr.curve(scores.class0 =as.numeric(test_2014$bart.prob),
+                     weights.class0 = as.numeric(test_2014$export),
+                     curve = T)
+
+pr_bart_2015 <- pr.curve(scores.class0 =as.numeric(test_2015$bart.prob),
+                     weights.class0 = as.numeric(test_2015$export),
+                     curve = T)
+
+pr_bart_2016 <- pr.curve(scores.class0 =as.numeric(test_2016$bart.prob),
+                     weights.class0 = as.numeric(test_2016$export),
+                     curve = T)
+
+pr_bart_2017 <- pr.curve(scores.class0 =as.numeric(test_2017$bart.prob),
+                     weights.class0 = as.numeric(test_2017$export),
+                     curve = T)
+
+pr_bart_2018 <- pr.curve(scores.class0 =as.numeric(test_2018$bart.prob),
+                     weights.class0 = as.numeric(test_2018$export),
+                     curve = T)
+
+pr<-c("PR",pr_bart_2011[["auc.integral"]],pr_bart_2012[["auc.integral"]],pr_bart_2013[["auc.integral"]],pr_bart_2014[["auc.integral"]],pr_bart_2015[["auc.integral"]],pr_bart_2016[["auc.integral"]],pr_bart_2017[["auc.integral"]],pr_bart_2018[["auc.integral"]])
+
+Bart_Statistics_annual<-rbind(Bart_Statistics_annual,pr)
+rm(pr_bart_2011,pr_bart_2012,pr_bart_2013,pr_bart_2014,pr_bart_2015,pr_bart_2016,pr_bart_2017,pr_bart_2018,pr)
+
+Bart_Statistics_annual[,c(2:9)] <- sapply(Bart_Statistics_annual[,c(2:9)],as.numeric)
+Bart_Statistics_annual=Bart_Statistics_annual %>% mutate_if(is.numeric, ~round(., 3))
+
+size_testing<-c("Size Sample",nrow(test_2011),nrow(test_2012),nrow(test_2013),nrow(test_2014),nrow(test_2015),nrow(test_2016),nrow(test_2017),nrow(test_2018))
+Bart_Statistics_annual<-rbind(Bart_Statistics_annual,size_testing)
+rm(size_testing)
+```
+See the results:
+```{r BART stats final}
+Bart_Statistics_annual%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")%>%
+  kableExtra::row_spec(6, extra_css = "border-bottom: 1px solid;")
+```
+
+## BART_MIA
+
+### Training and Testing
+As in the benchmark, prepare Training and Testing for each year, now including *missing information*.
+```{r train test BART-MIA}
+set.seed(2021)
+training_firms_2011<-sample(data_ML.n[data_ML.n$year==2011,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2011,]$bvdidnumber)))
+train_2011.m<-subset(data_ML.n[data_ML.n$year==2011,],data_ML.n[data_ML.n$year==2011,]$bvdidnumber %in% training_firms_2011)
+test_2011.m<-subset(data_ML.n[data_ML.n$year==2011,],!(data_ML.n[data_ML.n$year==2011,]$bvdidnumber %in% training_firms_2011))
+
+training_firms_2012<-sample(data_ML.n[data_ML.n$year==2012,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2012,]$bvdidnumber)))
+train_2012.m<-subset(data_ML.n[data_ML.n$year==2012,],data_ML.n[data_ML.n$year==2012,]$bvdidnumber %in% training_firms_2012)
+test_2012.m<-subset(data_ML.n[data_ML.n$year==2012,],!(data_ML.n[data_ML.n$year==2012,]$bvdidnumber %in% training_firms_2012))
+
+training_firms_2013<-sample(data_ML.n[data_ML.n$year==2013,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2013,]$bvdidnumber)))
+train_2013.m<-subset(data_ML.n[data_ML.n$year==2013,],data_ML.n[data_ML.n$year==2013,]$bvdidnumber %in% training_firms_2013)
+test_2013.m<-subset(data_ML.n[data_ML.n$year==2013,],!(data_ML.n[data_ML.n$year==2013,]$bvdidnumber %in% training_firms_2013))
+
+training_firms_2014<-sample(data_ML.n[data_ML.n$year==2014,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2014,]$bvdidnumber)))
+train_2014.m<-subset(data_ML.n[data_ML.n$year==2014,],data_ML.n[data_ML.n$year==2014,]$bvdidnumber %in% training_firms_2014)
+test_2014.m<-subset(data_ML.n[data_ML.n$year==2014,],!(data_ML.n[data_ML.n$year==2014,]$bvdidnumber %in% training_firms_2014))
+
+training_firms_2015<-sample(data_ML.n[data_ML.n$year==2015,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2015,]$bvdidnumber)))
+train_2015.m<-subset(data_ML.n[data_ML.n$year==2015,],data_ML.n[data_ML.n$year==2015,]$bvdidnumber %in% training_firms_2015)
+test_2015.m<-subset(data_ML.n[data_ML.n$year==2015,],!(data_ML.n[data_ML.n$year==2015,]$bvdidnumber %in% training_firms_2015))
+
+training_firms_2016<-sample(data_ML.n[data_ML.n$year==2016,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2016,]$bvdidnumber)))
+train_2016.m<-subset(data_ML.n[data_ML.n$year==2016,],data_ML.n[data_ML.n$year==2016,]$bvdidnumber %in% training_firms_2016)
+test_2016.m<-subset(data_ML.n[data_ML.n$year==2016,],!(data_ML.n[data_ML.n$year==2016,]$bvdidnumber %in% training_firms_2016))
+
+training_firms_2017<-sample(data_ML.n[data_ML.n$year==2017,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2017,]$bvdidnumber)))
+train_2017.m<-subset(data_ML.n[data_ML.n$year==2017,],data_ML.n[data_ML.n$year==2017,]$bvdidnumber %in% training_firms_2017)
+test_2017.m<-subset(data_ML.n[data_ML.n$year==2017,],!(data_ML.n[data_ML.n$year==2017,]$bvdidnumber %in% training_firms_2017))
+
+training_firms_2018<-sample(data_ML.n[data_ML.n$year==2018,]$bvdidnumber,round(0.8*length(data_ML.n[data_ML.n$year==2018,]$bvdidnumber)))
+train_2018.m<-subset(data_ML.n[data_ML.n$year==2018,],data_ML.n[data_ML.n$year==2018,]$bvdidnumber %in% training_firms_2018)
+test_2018.m<-subset(data_ML.n[data_ML.n$year==2018,],!(data_ML.n[data_ML.n$year==2018,]$bvdidnumber %in% training_firms_2018))
+
+rm(training_firms_2011,training_firms_2012,training_firms_2013,training_firms_2014,training_firms_2015,training_firms_2016,training_firms_2017,training_firms_2018)
+```
+### Server
+Save the datasets locally
+```{r save train test NA}
+save(train_2011.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2011.m.RData")
+save(train_2012.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2012.m.RData")
+save(train_2013.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2013.m.RData")
+save(train_2014.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2014.m.RData")
+save(train_2015.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2015.m.RData")
+save(train_2016.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2016.m.RData")
+save(train_2017.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2017.m.RData")
+save(train_2018.m,file="/Users/francescamicocci/Documents/Export_project/Data/train_2018.m.RData")
+save(test_2011.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2011.m.RData")
+save(test_2012.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2012.m.RData")
+save(test_2013.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2013.m.RData")
+save(test_2014.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2014.m.RData")
+save(test_2015.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2015.m.RData")
+save(test_2016.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2016.m.RData")
+save(test_2017.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2017.m.RData")
+save(test_2018.m,file="/Users/francescamicocci/Documents/Export_project/Data/test_2018.m.RData")
+```
+Upload the files on server
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2011.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2011.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2012.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2012.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2013.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2013.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2014.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2014.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2015.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2015.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2016.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2016.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2017.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2017.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/train_2018.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test_2018.m.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+### Sample 2011
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2011
+R
+load("/home/francesca.micocci/Export_project/train_2011.m.RData")
+load("/home/francesca.micocci/Export_project/test_2011.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2011.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2011.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2011.m$export<-NULL
+test_2011.m$bvdidnumber<-NULL
+test_2011.m$year<-NULL
+
+bart_machine.fitted_2011.m<-predict(bart_machine.m, test_2011.m,type="prob")
+save(bart_machine.fitted_2011.m,file="/home/francesca.micocci/Export_project/bart.fitted_2011.m.RData")
+
+```
+### Sample 2012
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2012
+R
+load("/home/francesca.micocci/Export_project/train_2012.m.RData")
+load("/home/francesca.micocci/Export_project/test_2012.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2012.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2012.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2012.m$export<-NULL
+test_2012.m$bvdidnumber<-NULL
+test_2012.m$year<-NULL
+
+bart_machine.fitted_2012.m<-predict(bart_machine.m, test_2012.m,type="prob")
+save(bart_machine.fitted_2012.m,file="/home/francesca.micocci/Export_project/bart.fitted_2012.m.RData")
+
+```
+### Sample 2013
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2013
+R
+load("/home/francesca.micocci/Export_project/train_2013.m.RData")
+load("/home/francesca.micocci/Export_project/test_2013.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2013.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2013.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2013.m$export<-NULL
+test_2013.m$bvdidnumber<-NULL
+test_2013.m$year<-NULL
+
+bart_machine.fitted_2013.m<-predict(bart_machine.m, test_2013.m,type="prob")
+save(bart_machine.fitted_2013.m,file="/home/francesca.micocci/Export_project/bart.fitted_2013.m.RData")
+
+```
+### Sample 2014
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2014
+R
+load("/home/francesca.micocci/Export_project/train_2014.m.RData")
+load("/home/francesca.micocci/Export_project/test_2014.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train_2014.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2014.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2014.m$export<-NULL
+test_2014.m$bvdidnumber<-NULL
+test_2014.m$year<-NULL
+
+bart_machine.fitted_2014.m<-predict(bart_machine.m, test_2014.m,type="prob")
+save(bart_machine.fitted_2014.m,file="/home/francesca.micocci/Export_project/bart.fitted_2014.m.RData")
+
+```
+### Sample 2015
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2015
+R
+load("/home/francesca.micocci/Export_project/train_2015.m.RData")
+load("/home/francesca.micocci/Export_project/test_2015.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2015.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2015.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,serialize=FALSE,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2015.m$export<-NULL
+test_2015.m$bvdidnumber<-NULL
+test_2015.m$year<-NULL
+
+bart_machine.fitted_2015.m<-predict(bart_machine.m, test_2015.m,type="prob")
+save(bart_machine.fitted_2015.m,file="/home/francesca.micocci/Export_project/bart.fitted_2015.m.RData")
+
+```
+### Sample 2016
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2016
+R
+load("/home/francesca.micocci/Export_project/train_2016.m.RData")
+load("/home/francesca.micocci/Export_project/test_2016.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2016.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2016.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2016.m$export<-NULL
+test_2016.m$bvdidnumber<-NULL
+test_2016.m$year<-NULL
+
+bart_machine.fitted_2016.m<-predict(bart_machine.m, test_2016.m,type="prob")
+save(bart_machine.fitted_2016.m,file="/home/francesca.micocci/Export_project/bart.fitted_2016.m.RData")
+
+```
+### Sample 2017
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2017
+R
+load("/home/francesca.micocci/Export_project/train_2017.m.RData")
+load("/home/francesca.micocci/Export_project/test_2017.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2017.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2017.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2017.m$export<-NULL
+test_2017.m$bvdidnumber<-NULL
+test_2017.m$year<-NULL
+
+bart_machine.fitted_2017.m<-predict(bart_machine.m, test_2017.m,type="prob")
+save(bart_machine.fitted_2017.m,file="/home/francesca.micocci/Export_project/bart.fitted_2017.m.RData")
+```
+### Sample 2018
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_2018
+R
+load("/home/francesca.micocci/Export_project/train_2018.m.RData")
+load("/home/francesca.micocci/Export_project/test_2018.m.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx90g")
+library("bartMachine")
+y <- factor(train_2018.m$export,levels=c("1","0"))
+X<-as.data.frame(train_2018.m)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test_2018.m$export<-NULL
+test_2018.m$bvdidnumber<-NULL
+test_2018.m$year<-NULL
+
+bart_machine.fitted_2018.m<-predict(bart_machine.m, test_2018.m,type="prob")
+save(bart_machine.fitted_2018.m,file="/home/francesca.micocci/Export_project/bart.fitted_2018.m.RData")
+
+```
+### Download predictions
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2011.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2011.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2012.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2012.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2013.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2013.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2014.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2014.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2015.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2015.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2016.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2016.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2017.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2017.m.RData
+KQyVZQ9v3uL
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted_2018.m.RData /Users/francescamicocci/Documents/Server/bart.fitted_2018.m.RData
+KQyVZQ9v3uL
+```
+### Evaluate BART-MIA
+Now proceed with the predictions based on BART-MIA.
+```{r load pred prob BART-MIA}
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2011.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2012.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2013.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2014.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2015.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2016.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2017.m.RData")
+load("/Users/francescamicocci/Documents/Server/bart.fitted_2018.m.RData")
+
+test_2011.m$bart.mia.prob<-(bart_machine.fitted_2011.m)
+test_2012.m$bart.mia.prob<-(bart_machine.fitted_2012.m)
+test_2013.m$bart.mia.prob<-(bart_machine.fitted_2013.m)
+test_2014.m$bart.mia.prob<-(bart_machine.fitted_2014.m)
+test_2015.m$bart.mia.prob<-(bart_machine.fitted_2015.m)
+test_2016.m$bart.mia.prob<-(bart_machine.fitted_2016.m)
+test_2017.m$bart.mia.prob<-(bart_machine.fitted_2017.m)
+test_2018.m$bart.mia.prob<-(bart_machine.fitted_2018.m)
+
+rm(bart_machine.fitted_2011.m,bart_machine.fitted_2012.m,bart_machine.fitted_2013.m,bart_machine.fitted_2014.m,bart_machine.fitted_2015.m,bart_machine.fitted_2016.m,bart_machine.fitted_2017.m,bart_machine.fitted_2018.m)
+
+```
+Generate the predictions
+```{r BART-MIA pred}
+test_2011.m$bart.mia.pred<-ifelse(test_2011.m$bart.mia.prob>0.5,1,0)
+test_2012.m$bart.mia.pred<-ifelse(test_2012.m$bart.mia.prob>0.5,1,0)
+test_2013.m$bart.mia.pred<-ifelse(test_2013.m$bart.mia.prob>0.5,1,0)
+test_2014.m$bart.mia.pred<-ifelse(test_2014.m$bart.mia.prob>0.5,1,0)
+test_2015.m$bart.mia.pred<-ifelse(test_2015.m$bart.mia.prob>0.5,1,0)
+test_2016.m$bart.mia.pred<-ifelse(test_2016.m$bart.mia.prob>0.5,1,0)
+test_2017.m$bart.mia.pred<-ifelse(test_2017.m$bart.mia.prob>0.5,1,0)
+test_2018.m$bart.mia.pred<-ifelse(test_2018.m$bart.mia.prob>0.5,1,0)
+```
+
+Generate the confusion Matrices
+```{r CM BART-MIA annual}
+cm1=confusionMatrix(data = as.factor(test_2011.m$bart.mia.pred),
+                reference = as.factor(test_2011.m$export),positive="1")
+
+cm2=confusionMatrix(data = as.factor(test_2012.m$bart.mia.pred),
+                reference = as.factor(test_2012.m$export),positive="1")
+
+cm3=confusionMatrix(data = as.factor(test_2013.m$bart.mia.pred),
+                reference = as.factor(test_2013.m$export),positive="1")
+
+cm4=confusionMatrix(data = as.factor(test_2014.m$bart.mia.pred),
+                reference = as.factor(test_2014.m$export),positive="1")
+
+cm5=confusionMatrix(data = as.factor(test_2015.m$bart.mia.pred),
+                reference = as.factor(test_2015.m$export),positive="1")
+
+cm6=confusionMatrix(data = as.factor(test_2016.m$bart.mia.pred),
+                reference = as.factor(test_2016.m$export),positive="1")
+
+cm7=confusionMatrix(data = as.factor(test_2017.m$bart.mia.pred),
+                reference = as.factor(test_2017.m$export),positive="1")
+
+cm8=confusionMatrix(data = as.factor(test_2018.m$bart.mia.pred),
+                reference = as.factor(test_2018.m$export),positive="1")
+```
+
+Generate a Table Summarizing the performance measures
+```{r BART-MIA annual stats}
+Bart_Mia_Statistics_annual<-data.frame(matrix(vector(), 4, 9,
+                dimnames=list(c(), c("Performance.Measure", "year.2011", "year.2012","year.2013","year.2014","year.2015","year.2016","year.2017","year.2018"))),
+                stringsAsFactors=F)
+Bart_Mia_Statistics_annual$PeBartormance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+
+Bart_Mia_Statistics_annual$year.2011<-c(cm1[["overall"]][["Accuracy"]],cm1[["byClass"]][["Sensitivity"]],cm1[["byClass"]][["Specificity"]],cm1[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2012<-c(cm2[["overall"]][["Accuracy"]],cm2[["byClass"]][["Sensitivity"]],cm2[["byClass"]][["Specificity"]],cm2[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2013<-c(cm3[["overall"]][["Accuracy"]],cm3[["byClass"]][["Sensitivity"]],cm3[["byClass"]][["Specificity"]],cm3[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2014<-c(cm4[["overall"]][["Accuracy"]],cm4[["byClass"]][["Sensitivity"]],cm4[["byClass"]][["Specificity"]],cm4[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2015<-c(cm5[["overall"]][["Accuracy"]],cm5[["byClass"]][["Sensitivity"]],cm5[["byClass"]][["Specificity"]],cm5[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2016<-c(cm6[["overall"]][["Accuracy"]],cm6[["byClass"]][["Sensitivity"]],cm6[["byClass"]][["Specificity"]],cm6[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2017<-c(cm7[["overall"]][["Accuracy"]],cm7[["byClass"]][["Sensitivity"]],cm7[["byClass"]][["Specificity"]],cm7[["byClass"]][["Balanced Accuracy"]])
+
+Bart_Mia_Statistics_annual$year.2018<-c(cm8[["overall"]][["Accuracy"]],cm8[["byClass"]][["Sensitivity"]],cm8[["byClass"]][["Specificity"]],cm8[["byClass"]][["Balanced Accuracy"]])
+
+rm(cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8)
+```
+
+ROC Curve
+```{r ROC BART-MIA annual}
+roc_bart_2011.m <- roc.curve(scores.class0 =as.numeric(test_2011.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2011.m$export),
+                     curve = T)
+
+roc_bart_2012.m<- roc.curve(scores.class0 =as.numeric(test_2012.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2012.m$export),
+                     curve = T)
+
+roc_bart_2013.m<- roc.curve(scores.class0 =as.numeric(test_2013.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2013.m$export),
+                     curve = T)
+
+roc_bart_2014.m<- roc.curve(scores.class0 =as.numeric(test_2014.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2014.m$export),
+                     curve = T)
+
+roc_bart_2015.m<- roc.curve(scores.class0 =as.numeric(test_2015.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2015.m$export),
+                     curve = T)
+
+roc_bart_2016.m<- roc.curve(scores.class0 =as.numeric(test_2016.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2016.m$export),
+                     curve = T)
+
+roc_bart_2017.m<- roc.curve(scores.class0 =as.numeric(test_2017.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2017.m$export),
+                     curve = T)
+
+roc_bart_2018.m<- roc.curve(scores.class0 =as.numeric(test_2018.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2018.m$export),
+                     curve = T)
+
+roc<-c("ROC",roc_bart_2011.m[["auc"]],roc_bart_2012.m[["auc"]],roc_bart_2013.m[["auc"]],roc_bart_2014.m[["auc"]],roc_bart_2015.m[["auc"]],roc_bart_2016.m[["auc"]],roc_bart_2017.m[["auc"]],roc_bart_2018.m[["auc"]])
+
+Bart_Mia_Statistics_annual<-rbind(Bart_Mia_Statistics_annual,roc)
+rm(roc_bart_2011.m,roc_bart_2012.m,roc_bart_2013.m,roc_bart_2014.m,roc_bart_2015.m,roc_bart_2016.m,roc_bart_2017.m,roc_bart_2018.m,roc)
+```
+PR Curve
+```{r PR BART-MIA annual, warning=FALSE, message=FALSE}
+pr_bart_2011.m<- pr.curve(scores.class0 =as.numeric(test_2011.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2011.m$export),
+                     curve = T)
+
+pr_bart_2012.m<- pr.curve(scores.class0 =as.numeric(test_2012.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2012.m$export),
+                     curve = T)
+
+pr_bart_2013.m<- pr.curve(scores.class0 =as.numeric(test_2013.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2013.m$export),
+                     curve = T)
+
+pr_bart_2014.m<- pr.curve(scores.class0 =as.numeric(test_2014.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2014.m$export),
+                     curve = T)
+
+pr_bart_2015.m<- pr.curve(scores.class0 =as.numeric(test_2015.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2015.m$export),
+                     curve = T)
+
+pr_bart_2016.m<- pr.curve(scores.class0 =as.numeric(test_2016.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2016.m$export),
+                     curve = T)
+
+pr_bart_2017.m<- pr.curve(scores.class0 =as.numeric(test_2017.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2017.m$export),
+                     curve = T)
+
+pr_bart_2018.m<- pr.curve(scores.class0 =as.numeric(test_2018.m$bart.mia.prob),
+                     weights.class0 = as.numeric(test_2018.m$export),
+                     curve = T)
+
+pr<-c("PR",pr_bart_2011.m[["auc.integral"]],pr_bart_2012.m[["auc.integral"]],pr_bart_2013.m[["auc.integral"]],pr_bart_2014.m[["auc.integral"]],pr_bart_2015.m[["auc.integral"]],pr_bart_2016.m[["auc.integral"]],pr_bart_2017.m[["auc.integral"]],pr_bart_2018.m[["auc.integral"]])
+
+Bart_Mia_Statistics_annual<-rbind(Bart_Mia_Statistics_annual,pr)
+rm(pr_bart_2011.m,pr_bart_2012.m,pr_bart_2013.m,pr_bart_2014.m,pr_bart_2015.m,pr_bart_2016.m,pr_bart_2017.m,pr_bart_2018.m,pr)
+
+Bart_Mia_Statistics_annual[,c(2:9)] <- sapply(Bart_Mia_Statistics_annual[,c(2:9)],as.numeric)
+Bart_Mia_Statistics_annual=Bart_Mia_Statistics_annual %>% mutate_if(is.numeric, ~round(., 3))
+
+size_testing<-c("Size Sample",nrow(test_2011.m),nrow(test_2012.m),nrow(test_2013.m),nrow(test_2014.m),nrow(test_2015.m),nrow(test_2016.m),nrow(test_2017.m),nrow(test_2018.m))
+size_testing<-as.numeric(size_testing)
+Bart_Mia_Statistics_annual<-rbind(Bart_Mia_Statistics_annual,size_testing)
+
+rm(size_testing)
+```
+See the results:
+```{r BART-MIA stats annual final}
+Bart_Mia_Statistics_annual%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")%>%
+  kableExtra::row_spec(6, extra_css = "border-bottom: 1px solid;")
+```
+# Predictors selected by lasso
+
+Now we want to check whether it is possible to get rid of some noise by selecting variables with a higher explanatory power to be used as predictors. Note that from the correlation matrix of predictors we already know that there is plenty on endogeneity on our data. 
+
+In order to choose the predictors we use a data-driven approach by running a robust lasso and using the selected predictors.
+
+```{r rn the lasso}
+set.seed(123)
+#Run the Lasso
+lasso = rlassologit(formula.logit,data=train1.m, post = TRUE) 
+#Extract the betas
+beta=as.data.frame(lasso$beta)
+# Move the rownames to a column named predictors
+beta <- cbind(predictors = rownames(beta), beta)
+#Keep only betas with non-zero value
+beta<-subset(beta,beta$`lasso$beta`!=0)
+#Generat the subset of predictors to be used next
+beta<-beta$predictors
+```
+## Logit-lasso on train1.m and test1.m
+```{r CM logit lasso}
+test_set1<-test1.m
+test_set1$bvdidnumber<-NULL
+test_set1$year<-NULL
+test_set1<-model.matrix(export ~ .,test_set1)
+lasso.prob<-predict(lasso, test_set1)
+lasso.prob<-as.vector(lasso.prob)
+test_set1<-na.omit(test1.m)
+test_set1$lasso.prob<-lasso.prob
+test_set1$lasso.pred<-ifelse(test_set1$lasso.prob>0.5,1,0)
+
+cm_logit_lasso=confusionMatrix(data = as.factor(test_set1$lasso.pred),
+                reference = as.factor(test_set1$export))
+```
+ROC and PR curve
+```{r ROC PR logit lasso}
+roc_logit_lasso<-roc.curve(scores.class0 =as.numeric(test_set1$lasso.prob),
+                     weights.class0 = as.numeric(test_set1$export),
+                     curve = T)
+
+pr_logit_lasso<-pr.curve(scores.class0 =as.numeric(test_set1$lasso.prob),
+                     weights.class0 = as.numeric(test_set1$export),
+                     curve = T)
+logit_lasso_predictors<-c("Logit-Lasso",cm_logit_lasso[["byClass"]][["Sensitivity"]],cm_logit_lasso[["byClass"]][["Specificity"]],cm_logit_lasso[["byClass"]][["Balanced Accuracy"]],roc_logit_lasso[["auc"]],pr_logit_lasso[["auc.integral"]])
+
+rm(cm_logit_lasso,roc_logit_lasso,pr_logit_lasso)
+```
+
+Prepare the dataset for BART-MIA, use same train and test datasets as in train and test 1.m
+```{r}
+beta2<-append(beta, c("export","bvdidnumber","year"), after = length(beta))
+#Transform the factor variables in dummies
+train.lasso<-data.frame(train1.m[ , ! colnames(train1.m) %in% c("nuts2","nace_2d","inward_FDI","cons_accounts","corp_cont","outward_FDI","patents")],model.matrix( ~ nuts2+nace_2d+inward_FDI+outward_FDI+cons_accounts+corp_cont+patents - 1, train1.m))
+#Keep only selected variables
+train.lasso=train.lasso[beta2]
+
+test.lasso<-data.frame(test1.m[ , ! colnames(test1.m) %in% c("nuts2","nace_2d","inward_FDI","cons_accounts","corp_cont","outward_FDI","patents")],model.matrix( ~ nuts2+nace_2d+inward_FDI+outward_FDI+cons_accounts+corp_cont+patents - 1, test1.m))
+test.lasso=test.lasso[beta2]
+```
+## CART
+```{r CART lasso}
+formula.ML.lasso<-(as.formula(paste("export ~", paste(beta, collapse="+")))) 
+rpart.lasso <- rpart(formula.ML.lasso, data=train.lasso, method="class")
+test.lasso$rpart <- predict(rpart.lasso, newdata=test.lasso,type='class')
+```
+Evaluate
+```{r CM CART lasso}
+cm_cart_predictors<-confusionMatrix(data = as.factor(test.lasso$rpart),
+                reference = as.factor(test.lasso$export),positive = "1")
+cart_predictors<-c("CART",cm_cart_predictors[["byClass"]][["Sensitivity"]],cm_cart_predictors[["byClass"]][["Specificity"]],cm_cart_predictors[["byClass"]][["Balanced Accuracy"]],NA,NA)
+
+rm(cm_cart_predictors)
+```
+
+## Random Forest
+
+Note that for predictions from Random Forest we need to have no NA in the test-set. Therefoere, we create subsets of the train and test sets with no NA and we use them to train and test the algorithm
+```{r save files}
+formula.ML.lasso2<-(as.formula(paste("as.factor(export) ~", paste(beta, collapse="+")))) 
+save(formula.ML.lasso2,file="/Users/francescamicocci/Documents/Export_project/Data/formula.lasso2.RData")
+save(train.lasso,file="/Users/francescamicocci/Documents/Export_project/Data/train.lasso.RData")
+save(test.lasso,file="/Users/francescamicocci/Documents/Export_project/Data/test.lasso.RData")
+```
+Upload files on the server
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train.lasso.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test.lasso.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/formula.lasso2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+Run the model
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+R
+load('/home/francesca.micocci/Export_project/train.lasso.RData')
+load('/home/francesca.micocci/Export_project/test.lasso.RData')
+load('/home/francesca.micocci/Export_project/formula.lasso2.RData')
+
+library('randomForest')
+train.lasso.nona<-na.omit(train.lasso)
+set.seed(2021)
+rf.lasso<- randomForest(formula.ML.lasso2, data=train.lasso.nona, importance=TRUE, ntree = 300, mtry = 7)
+
+test.lasso.nona<-na.omit(test.lasso)
+rf.fitted.prob.lasso <- predict(rf.lasso, test.lasso.nona,type='prob')
+rf.fitted.prob.lasso<-rf.fitted.prob.lasso[,2]
+save(rf.fitted.prob.lasso,file='/home/francesca.micocci/Export_project/rf.fitted.lasso.RData')
+```
+Download the predicted outcomes
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/rf.fitted.lasso.RData /Users/francescamicocci/Documents/Server/rf.fitted.lasso.RData
+KQyVZQ9v3uL
+```
+load the data
+```{r load prd RF lasso}
+load('/Users/francescamicocci/Documents/Server/rf.fitted.lasso.RData')
+```
+Evaluate the model
+```{r CM RF lasso}
+test.lasso.nona<-na.omit(test.lasso)
+rf.fitted.pred.lasso<-ifelse(rf.fitted.prob.lasso>0.5,1,0)
+cm_rf_predictors<-confusionMatrix(data = as.factor(rf.fitted.pred.lasso),
+                reference = as.factor(test.lasso.nona$export),positive = "1")
+```
+ROC and PR
+```{r ROC PR RF lasso}
+roc_rf_predictors<-roc.curve(scores.class0 =as.numeric(rf.fitted.prob.lasso),
+                     weights.class0 = as.numeric(test.lasso.nona$export),
+                     curve = T)
+pr_rf_predictors<-pr.curve(scores.class0 =as.numeric(rf.fitted.prob.lasso),
+                     weights.class0 = as.numeric(test.lasso.nona$export),
+                     curve = T)
+rf_predictors<-c("Random Forest",cm_rf_predictors[["byClass"]][["Sensitivity"]],cm_rf_predictors[["byClass"]][["Specificity"]],cm_rf_predictors[["byClass"]][["Balanced Accuracy"]],roc_rf_predictors[["auc"]],pr_rf_predictors[["auc.integral"]])
+rm(cm_rf_predictors,roc_rf_predictors,pr_rf_predictors)
+```
+
+## BART
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+R
+rm(list=ls())
+load("/home/francesca.micocci/Export_project/train.lasso.RData")
+load("/home/francesca.micocci/Export_project/test.lasso.RData")
+```
+
+Run the Algorithm
+```{}
+train<-na.omit(train.lasso)
+test<-na.omit(test.lasso)
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train$export,levels=c("1","0"))
+X<-as.data.frame(train)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine <- bartMachine(X, y,serialize=FALSE, seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test$export<-NULL
+test$bvdidnumber<-NULL
+test$year<-NULL
+test$rpart<-NULL
+
+bart_machine.fitted.lasso<-predict(bart_machine, test,type="prob")
+save(bart_machine.fitted.lasso,file="/home/francesca.micocci/Export_project/bart.fitted.lasso.RData")
+```
+Download the results
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.lasso.RData /Users/francescamicocci/Documents/Server/bart.fitted.lasso.RData
+KQyVZQ9v3uL
+```
+Evaluate the results: load the data
+```{r load prd BART lasso}
+load('/Users/francescamicocci/Documents/Server/bart.fitted.lasso.RData')
+```
+Perform the analysis
+```{r gen pred BART lasso}
+test.lasso.nona$bart.prob<-bart_machine.fitted.lasso
+test.lasso.nona$bart.pred<-ifelse(test.lasso.nona$bart.prob>0.5,1,0)
+
+rm(bart_machine.fitted.lasso)
+```
+Compute Confusion Matrix and ROC, PR
+```{r BART lasso stats}
+cm_bart_predictors<-confusionMatrix(data = as.factor(test.lasso.nona$bart.pred),
+                reference = as.factor(test.lasso.nona$export),positive = "1")
+roc_bart_predictors<-roc.curve(scores.class0 =as.numeric(test.lasso.nona$bart.prob),
+                     weights.class0 = as.numeric(test.lasso.nona$export),
+                     curve = T)
+pr_bart_predictors<-pr.curve(scores.class0 =as.numeric(test.lasso.nona$bart.prob),
+                     weights.class0 = as.numeric(test.lasso.nona$export),
+                     curve = T)
+bart_predictors<-c("BART",cm_bart_predictors[["byClass"]][["Sensitivity"]],cm_bart_predictors[["byClass"]][["Specificity"]],cm_bart_predictors[["byClass"]][["Balanced Accuracy"]],roc_bart_predictors[["auc"]],pr_bart_predictors[["auc.integral"]])
+rm(cm_bart_predictors,roc_bart_predictors,pr_bart_predictors)
+
+```
+## BART-MIA
+Enter the server
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+```
+Open R and load the data
+```{}
+tmux new -s bart_mia_lasso
+R
+rm(list=ls())
+load("/home/francesca.micocci/Export_project/train.lasso.RData")
+load("/home/francesca.micocci/Export_project/test.lasso.RData")
+```
+
+Run the Algorithm
+```{}
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train.lasso$export,levels=c("1","0"))
+X<-as.data.frame(train.lasso)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.m <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+```
+Compute the predicted probabilities on the test set. Save the results on the server.
+
+```{}
+test.lasso$export<-NULL
+test.lasso$bvdidnumber<-NULL
+test.lasso$year<-NULL
+
+bart_machine.fitted.lasso.m<-predict(bart_machine.m, test.lasso,type="prob")
+save(bart_machine.fitted.lasso.m,file="/home/francesca.micocci/Export_project/bart.mia.fitted.lasso.RData")
+```
+Download the results
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.mia.fitted.lasso.RData /Users/francescamicocci/Documents/Server/bart.mia.fitted.lasso.RData
+KQyVZQ9v3uL
+```
+Load the data
+```{r load pred BART_MIA lasso}
+load('/Users/francescamicocci/Documents/Server/bart.mia.lasso.RData')
+```
+Perform the analysis
+```{r gen pred BART-MIA lasso}
+test.lasso$bart.mia.prob<-bart.mia.lasso
+test.lasso$bart.mia.pred<-ifelse(test.lasso$bart.mia.prob>0.5,1,0)
+
+rm(bart.mia.lasso)
+```
+
+Compute Confusion Matrix and ROC, PR
+```{r BART-MIA lasso stats}
+cm_bart.mia_predictors<-confusionMatrix(data = as.factor(test.lasso$bart.mia.pred),
+                reference = as.factor(test.lasso$export),positive = "1")
+roc_bart.mia_predictors<-roc.curve(scores.class0 =as.numeric(test.lasso$bart.mia.prob),
+                     weights.class0 = as.numeric(test.lasso$export),
+                     curve = T)
+pr_bart.mia_predictors<-pr.curve(scores.class0 =as.numeric(test.lasso$bart.mia.prob),
+                     weights.class0 = as.numeric(test.lasso$export),
+                     curve = T)
+bart.mia_predictors<-c("BART-MIA",cm_bart.mia_predictors[["byClass"]][["Sensitivity"]],cm_bart.mia_predictors[["byClass"]][["Specificity"]],cm_bart.mia_predictors[["byClass"]][["Balanced Accuracy"]],roc_bart.mia_predictors[["auc"]],pr_bart.mia_predictors[["auc.integral"]])
+rm(cm_bart.mia_predictors,roc_bart.mia_predictors,pr_bart.mia_predictors)
+```
+## Put together the statistics
+```{r lasso subset stats}
+Perf_pred_lasso<-data.frame(matrix(vector(), 1, 6,
+                dimnames=list(c(), c("Model", "Sensitivity", "Specificity","Balanced Accuracy","ROC","PR"))),
+                stringsAsFactors=F)
+Perf_pred_lasso<-rbind(Perf_pred_lasso,logit_lasso_predictors,cart_predictors,rf_predictors,bart_predictors,bart.mia_predictors)
+rm(logit_lasso_predictors,cart_predictors,rf_predictors,bart_predictors,bart.mia_predictors)
+```
+See the results:
+```{r lasso subset stats final}
+Perf_pred_lasso<-subset(Perf_pred_lasso,!is.na(Perf_pred_lasso$Model))
+for (i in 2:6){
+  Perf_pred_lasso[,i]<-as.numeric(Perf_pred_lasso[,i])
+}
+Perf_pred_lasso%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")
+```
+Remove useless
+```{r clear lasso}
+rm(lasso,beta,beta2)
+```
+
+
+# Export Share
+
+Define the export share as share of export revenues over operating revenues turnover. Since you might have strange results due to:
+1) Negative export revenues or Negative operating revenues turnover 
+2) 0 operating revenues turnover and non-zero export revenues
+
+We define export share only for firms where both are positive and export revenues<= operative revenues turnover
+```{r export share}
+data$export_share<-ifelse(data$exportrevenueeur>=0&data$exportrevenueeur<=data$operatingrevenueturnovereur,data$exportrevenueeur/data$operatingrevenueturnovereur,0)
+```
+## 1st Percentile
+
+Now we have to define the dummy exporter using a threshold of the share. Try with 1st percentile of the positives. Then proceed as always.
+```{r 1st pct}
+data_exp=data[!is.na(data$export_share),]
+data_exp$export<-ifelse(data_exp$export_share>quantile(data_exp[data_exp$export_share>0,]$export_share,probs = 0.01),1,0)
+
+data_var.s<-data_exp[pred_ML]
+data_var.s$export<-data_exp$export
+data_var.s$bvdidnumber<-data_exp$bvdidnumber
+data_var.s$year<-data_exp$year
+data_var.s$missing<-rowSums(is.na(data_var.s))
+data_var.s<-data_var.s[!is.na(data_var.s$export),]
+data_ML.s<-subset(data_var.s,data_var.s$missing<42)
+
+firms.s <- as.vector(data_ML.s[!duplicated(data_ML.s$bvdidnumber),]$bvdidnumber)
+
+set.seed(2002)
+testing_firms.s  <- sample(firms.s,round(0.2*length(firms.s)))
+training_firms.s<-setdiff(firms.s,testing_firms.s)
+
+train.s<-subset(data_ML.s, bvdidnumber %in% training_firms.s)
+test.s<-subset(data_ML.s, bvdidnumber %in% testing_firms.s)
+
+rm(firms.s,training_firms.s,testing_firms.s,data_var.s)
+```
+Export the training data to be used. Upload it on terminal. Proceed with the algorithms on the Server. Download the Data back to local. Keep with usual stuff
+
+Save data to be used locally.
+```{r upload train test 1pct}
+save(train.s,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s.RData")
+save(test.s,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s.RData")
+```
+**SERVER**
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train.s.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test.s.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+Run the BART-MIA
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+
+tmux new-session -s bart_mia_s1
+R
+rm(list=ls())
+load('/home/francesca.micocci/Export_project/test.s.RData')
+load('/home/francesca.micocci/Export_project/train.s.RData')
+
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train.s$export,levels=c("1","0"))
+X<-as.data.frame(train.s)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.s <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+test.s$bvdidnumber<-NULL
+test.s$export<-NULL
+test.s$year<-NULL
+bart.fitted.s<-predict(bart_machine.s, test.s,type="prob")
+save(bart.fitted.s,file="/home/francesca.micocci/Export_project/bart.fitted.s.RData")
+
+```
+
+Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s.RData /Users/francescamicocci/Documents/Server/bart.fitted.s.RData
+KQyVZQ9v3uL
+```
+
+Now proceed with the predictions based on BART.
+```{r load results 1pct}
+load("/Users/francescamicocci/Documents/Server/bart.fitted.s.RData")
+```
+
+
+## 2st Percentile
+
+Now we have to define the dummy exporter using a threshold of the share. Try with 1st percentile of the positives. Then proceed as always.
+```{r 2pct}
+data_exp2=data[!is.na(data$export_share),]
+data_exp2$export<-ifelse(data_exp2$export_share>quantile(data_exp2[data_exp2$export_share>0,]$export_share,probs = 0.02),1,0)
+
+data_var.s2<-data_exp2[pred_ML]
+data_var.s2$bvdidnumber<-data_exp2$bvdidnumber
+data_var.s2$year<-data_exp2$year
+data_var.s2$export<-data_exp2$export
+data_var.s2$missing<-rowSums(is.na(data_var.s2))
+data_var.s2<-data_var.s2[!is.na(data_var.s2$export),]
+data_ML.s2<-subset(data_var.s2,data_var.s2$missing<42)
+
+
+firms.s2 <- as.vector(data_ML.s2[!duplicated(data_ML.s2$bvdidnumber),]$bvdidnumber)
+
+set.seed(2002)
+testing_firms.s2  <- sample(firms.s2,round(0.2*length(firms.s2)))
+training_firms.s2<-setdiff(firms.s2,testing_firms.s2)
+
+train.s2<-subset(data_ML.s2, bvdidnumber %in% training_firms.s2)
+test.s2<-subset(data_ML.s2, bvdidnumber %in% testing_firms.s2)
+
+rm(firms.s2,training_firms.s2,testing_firms.s2,data_var.s2)
+```
+Export the training data to be used. Upload it on terminal. Proceed with the algorithms on the Server. Download the Data back to local. Keep with usual stuff
+
+Save data to be used locally.
+```{r upload 2pct}
+save(train.s2,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s2.RData")
+save(test.s2,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s2.RData")
+```
+**SERVER!**
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train.s2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test.s2.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+Run the BART-MIA
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+
+tmux new-session -s bart_mia_s2
+R
+rm(list=ls())
+load('/home/francesca.micocci/Export_project/test.s2.RData')
+load('/home/francesca.micocci/Export_project/train.s2.RData')
+
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train.s2$export,levels=c("1","0"))
+X<-as.data.frame(train.s2)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.s <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+test.s2$bvdidnumber<-NULL
+test.s2$export<-NULL
+test.s2$year<-NULL
+bart.fitted.s2<-predict(bart_machine.s, test.s2,type="prob")
+save(bart.fitted.s2,file="/home/francesca.micocci/Export_project/bart.fitted.s2.RData")
+
+```
+Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s2.RData /Users/francescamicocci/Documents/Server/bart.fitted.s2.RData
+KQyVZQ9v3uL
+```
+
+Now proceed with the predictions based on BART.
+```{r load results 2pct}
+load("/Users/francescamicocci/Documents/Server/bart.fitted.s2.RData")
+```
+
+## 5st Percentile
+
+Now we have to define the dummy exporter using a threshold of the share. Try with 1st percentile of the positives. Then proceed as always.
+```{r 5 pct}
+data_exp5=data[!is.na(data$export_share),]
+data_exp5$export<-ifelse(data_exp5$export_share>quantile(data_exp5[data_exp5$export_share>0,]$export_share,probs = 0.05),1,0)
+
+data_var.s5<-data_exp5[pred_ML]
+data_var.s5$bvdidnumber<-data_exp5$bvdidnumber
+data_var.s5$year<-data_exp5$year
+data_var.s5$export<-data_exp5$export
+data_var.s5$missing<-rowSums(is.na(data_var.s5))
+data_var.s5<-data_var.s5[!is.na(data_var.s5$export),]
+data_ML.s5<-subset(data_var.s5,data_var.s5$missing<42)
+
+
+firms.s5 <- as.vector(data_ML.s5[!duplicated(data_ML.s5$bvdidnumber),]$bvdidnumber)
+
+set.seed(2002)
+testing_firms.s5  <- sample(firms.s5,round(0.2*length(firms.s5)))
+training_firms.s5<-setdiff(firms.s5,testing_firms.s5)
+
+train.s5<-subset(data_ML.s5, bvdidnumber %in% training_firms.s5)
+test.s5<-subset(data_ML.s5, bvdidnumber %in% testing_firms.s5)
+
+rm(firms.s5,training_firms.s5,testing_firms.s5,data_var.s5)
+```
+Export the training data to be used. Upload it on terminal. Proceed with the algorithms on the Server. Download the Data back to local. Keep with usual stuff
+
+Save data to be used locally.
+```{r upload 5 pct}
+save(train.s5,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s5.RData")
+save(test.s5,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s5.RData")
+```
+**SERVER**
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train.s5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test.s5.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+Run the BART-MIA
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+
+tmux new-session -s bart_mia_s5
+R
+rm(list=ls())
+load('/home/francesca.micocci/Export_project/test.s5.RData')
+load('/home/francesca.micocci/Export_project/train.s5.RData')
+
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train.s5$export,levels=c("1","0"))
+X<-as.data.frame(train.s5)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.s <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+test.s5$bvdidnumber<-NULL
+test.s5$export<-NULL
+test.s5$year<-NULL
+bart.fitted.s5<-predict(bart_machine.s, test.s5,type="prob")
+save(bart.fitted.s5,file="/home/francesca.micocci/Export_project/bart.fitted.s5.RData")
+
+```
+Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s5.RData /Users/francescamicocci/Documents/Server/bart.fitted.s5.RData
+KQyVZQ9v3uL
+```
+
+Now proceed with the predictions based on BART.
+```{r load results 5 pct}
+load("/Users/francescamicocci/Documents/Server/bart.fitted.s5.RData")
+```
+## 10th Percentile
+
+Now we have to define the dummy exporter using a threshold of the share. Try with 1st percentile of the positives. Then proceed as always.
+```{r 10 pct}
+data_exp10=data[!is.na(data$export_share),]
+data_exp10$export<-ifelse(data_exp10$export_share>quantile(data_exp10[data_exp10$export_share>0,]$export_share,probs = 0.05),1,0)
+
+data_var.s10<-data_exp10[pred_ML]
+data_var.s10$bvdidnumber<-data_exp10$bvdidnumber
+data_var.s10$year<-data_exp10$year
+data_var.s10$export<-data_exp10$export
+data_var.s10$missing<-rowSums(is.na(data_var.s10))
+data_var.s10<-data_var.s10[!is.na(data_var.s10$export),]
+data_ML.s10<-subset(data_var.s10,data_var.s10$missing<42)
+
+
+firms.s10 <- as.vector(data_ML.s10[!duplicated(data_ML.s10$bvdidnumber),]$bvdidnumber)
+
+set.seed(2002)
+testing_firms.s10  <- sample(firms.s10,round(0.2*length(firms.s10)))
+training_firms.s10<-setdiff(firms.s10,testing_firms.s10)
+
+train.s10<-subset(data_ML.s10, bvdidnumber %in% training_firms.s10)
+test.s10<-subset(data_ML.s10, bvdidnumber %in% testing_firms.s10)
+
+rm(firms.s10,training_firms.s10,testing_firms.s10,data_var.s10)
+```
+Export the training data to be used. Upload it on terminal. Proceed with the algorithms on the Server. Download the Data back to local. Keep with usual stuff
+
+Save data to be used locally.
+```{r upload 10pct}
+save(train.s10,file= "/Users/francescamicocci/Documents/Export_project/Data/train.s10.RData")
+save(test.s10,file= "/Users/francescamicocci/Documents/Export_project/Data/test.s10.RData")
+```
+**SERVER**
+Now open the Terminal and upload the file
+
+```{}
+scp /Users/francescamicocci/Documents/Export_project/Data/train.s10.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+
+scp /Users/francescamicocci/Documents/Export_project/Data/test.s10.RData francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/
+KQyVZQ9v3uL
+```
+
+Run the BART-MIA
+```{}
+ssh francesca.micocci@10.181.100.119
+KQyVZQ9v3uL
+
+tmux new-session -s bart_mia_s10
+R
+load('home/francesca.micocci/Export_project/test.s10.RData')
+load('home/francesca.micocci/Export_project/train.s10.RData')
+
+library(rJava)
+options(java.parameters="-Xmx50g")
+library("bartMachine")
+y <- factor(train.s10$export,levels=c("1","0"))
+X<-as.data.frame(train.s10)
+X$export<-NULL
+X$bvdidnumber<-NULL
+X$year<-NULL
+bart_machine.s <- bartMachine(X, y,use_missing_data=TRUE,use_missing_data_dummies_as_covars=TRUE,seed=2021)
+test.s10$bvdidnumber<-NULL
+test.s10$export<-NULL
+test.s10$year<-NULL
+bart.fitted.s10<-predict(bart_machine.s, test.s10,type="prob")
+save(bart.fitted.s10,file="/home/francesca.micocci/Export_project/bart.fitted.s10.RData")
+
+```
+Download the results on local
+```{}
+scp francesca.micocci@10.181.100.119:/home/francesca.micocci/Export_project/bart.fitted.s10.RData /Users/francescamicocci/Documents/Server/bart.fitted.s10.RData
+KQyVZQ9v3uL
+```
+
+Now proceed with the predictions based on BART.
+```{r load results 10pct}
+load("/Users/francescamicocci/Documents/Server/bart.fitted.s10.RData")
+```
+
+## Put them together 
+
+```{r gen pred pcts}
+test.s$bart_mia_prob=(1-bart_machine.fitted.s)
+test.s$bart_mia_pred<-ifelse(test.s$bart_mia_prob>=0.05,1,0)
+test.s2$bart_mia_prob=(1-bart_machine.fitted.s2)
+test.s2$bart_mia_pred<-ifelse(test.s2$bart_mia_prob>=0.05,1,0)
+test.s5$bart_mia_prob=(1-bart_machine.fitted.s5)
+test.s5$bart_mia_pred<-ifelse(test.s5$bart_mia_prob>=0.05,1,0)
+test.s10$bart_mia_prob=(1-bart_machine.fitted.s10)
+test.s10$bart_mia_pred<-ifelse(test.s10$bart_mia_prob>=0.05,1,0)
+
+rm(bart_machine.fitted.s,bart_machine.fitted.s2,bart_machine.fitted.s5,bart_machine.fitted.s10)
+```
+Merge all the predictions to make them comparable
+```{r merge}
+test.pct<-test.s[,c("bvdidnumber","year","export","bart_mia_prob","bart_mia_pred")]
+test.pct$bart_mia_prob.pct1=test.pct$bart_mia_prob
+test.pct$bart_mia_pred.pct1=test.pct$bart_mia_pred
+test.pct$export.pct1=test.pct$export
+
+test.pct<-merge(test.pct,test.s2[,c("bvdidnumber","year","export","bart_mia_prob","bart_mia_pred")],by=c("bvdidnumber","year"),suffixes = c("",".pct2"))
+test.pct<-merge(test.pct,test.s5[,c("bvdidnumber","year","export","bart_mia_prob","bart_mia_pred")],by=c("bvdidnumber","year"),suffixes = c("",".pct5"))
+test.pct<-merge(test.pct,test.s10[,c("bvdidnumber","year","export","bart_mia_prob","bart_mia_pred")],by=c("bvdidnumber","year"),suffixes = c("",".pct10"))
+```
+Generate the final table to be filled
+```{r pcts stats}
+Bart_MIA_Statistics.s<-data.frame(matrix(vector(), 4, 5,
+                dimnames=list(c(), c("Performance.Measure", "Pct1","Pct2","Pct5","Pct10"))),
+                stringsAsFactors=F)
+Bart_MIA_Statistics.s$Performance.Measure<-c("Accuracy","Sensitivity","Specificity","Balanced Accuracy")
+```
+### Pct1
+Confusion Matrix
+```{r CM pct1}
+cm=confusionMatrix(data = as.factor(test.pct$bart_mia_pred.pct1),
+                reference = as.factor(test.pct$export.pct1),positive = "1")
+```
+Generate the summary statistics table
+```{r Pct1 stats}
+Bart_MIA_Statistics.s$Pct1<-c(cm[["overall"]][["Accuracy"]],cm[["byClass"]][["Sensitivity"]],cm[["byClass"]][["Specificity"]],cm[["byClass"]][["Balanced Accuracy"]])
+rm(cm)
+```
+
+ROC Curve
+```{r ROC pct1}
+roc_BART.s<- roc.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct1),
+                     weights.class0 = as.numeric(test.pct$export.pct1),
+                     curve = T)
+roc<-c("ROC",roc_BART.s[["auc"]],NA,NA,NA)
+
+Bart_MIA_Statistics.s<-rbind(Bart_MIA_Statistics.s,roc)
+rm(roc_BART.s,roc)
+```
+PR Curve
+```{r PR pct1}
+pr_BARTs.s <- pr.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct1),
+                     weights.class0 = as.numeric(test.pct$export.pct1),
+                     curve = T)
+
+pr<-c("PR",pr_BARTs.s[["auc.integral"]],NA,NA,NA)
+
+Bart_MIA_Statistics.s<-rbind(Bart_MIA_Statistics.s,pr)
+rm(pr_BARTs.s,pr)
+```
+Add sample size and round the decimals
+```{r size pct1}
+size_testing.s<-c("Size Sample",nrow(test.pct),NA,NA,NA)
+Bart_MIA_Statistics.s<-rbind(Bart_MIA_Statistics.s,size_testing.s)
+rm(size_testing.s)
+Bart_MIA_Statistics.s[,2] <- sapply(Bart_MIA_Statistics.s[,2],as.numeric)
+Bart_MIA_Statistics.s=Bart_MIA_Statistics.s %>% mutate_if(is.numeric, ~round(., 3))
+```
+### Pct2
+```{r CM pct2}
+cm=confusionMatrix(data = as.factor(test.pct$bart_mia_pred.pct2),
+                reference = as.factor(test.pct$export.pct2),positive = "1")
+```
+Generate the summary statistics table
+```{r stats pct2}
+Bart_MIA_Statistics.s$Pct2<-c(cm[["overall"]][["Accuracy"]],cm[["byClass"]][["Sensitivity"]],cm[["byClass"]][["Specificity"]],cm[["byClass"]][["Balanced Accuracy"]],NA,NA,NA)
+rm(cm)
+```
+
+ROC Curve
+```{r ROC pct2}
+roc_BART.s<- roc.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct2),
+                     weights.class0 = as.numeric(test.pct$export.pct2),
+                     curve = T)
+
+Bart_MIA_Statistics.s[5,3]<-roc_BART.s[["auc"]]
+
+rm(roc_BART.s)
+```
+PR Curve
+```{r PR pct2}
+pr_BARTs.s <- pr.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct2),
+                     weights.class0 =as.numeric(test.pct$export.pct2),
+                     curve = T)
+
+Bart_MIA_Statistics.s[6,3]<-pr_BARTs.s[["auc.integral"]]
+rm(pr_BARTs.s)
+
+```
+Add sample size and round the decimals
+```{r size pct2}
+Bart_MIA_Statistics.s[7,3]<-nrow(test.pct)
+
+
+Bart_MIA_Statistics.s[,3] <- sapply(Bart_MIA_Statistics.s[,3],as.numeric)
+Bart_MIA_Statistics.s=Bart_MIA_Statistics.s %>% mutate_if(is.numeric, ~round(., 3))
+```
+### Pct5
+```{r CM pct5}
+cm=confusionMatrix(data = as.factor(test.pct$bart_mia_pred.pct5),
+                reference = as.factor(test.pct$export.pct5),positive = "1")
+```
+Generate the summary statistics table
+```{r stats pct5}
+Bart_MIA_Statistics.s$Pct5<-c(cm[["overall"]][["Accuracy"]],cm[["byClass"]][["Sensitivity"]],cm[["byClass"]][["Specificity"]],cm[["byClass"]][["Balanced Accuracy"]],NA,NA,NA)
+rm(cm)
+```
+
+ROC Curve
+```{r ROC pct5}
+roc_BART.s<- roc.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct5),
+                     weights.class0 = as.numeric(test.pct$export.pct5),
+                     curve = T)
+
+Bart_MIA_Statistics.s[5,4]<-roc_BART.s[["auc"]]
+
+rm(roc_BART.s)
+```
+PR Curve
+```{r PR pct5}
+pr_BARTs.s <- pr.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct5),
+                     weights.class0 =as.numeric(test.pct$export.pct5),
+                     curve = T)
+
+Bart_MIA_Statistics.s[6,4]<-pr_BARTs.s[["auc.integral"]]
+rm(pr_BARTs.s)
+
+```
+Add sample size and round the decimals
+```{r size pct5}
+Bart_MIA_Statistics.s[7,4]<-nrow(test.pct)
+
+
+Bart_MIA_Statistics.s[,4] <- sapply(Bart_MIA_Statistics.s[,4],as.numeric)
+Bart_MIA_Statistics.s=Bart_MIA_Statistics.s %>% mutate_if(is.numeric, ~round(., 3))
+```
+### Pct10
+```{r pct 10}
+cm=confusionMatrix(data = as.factor(test.pct$bart_mia_pred.pct10),
+                reference = as.factor(test.pct$export.pct10),positive = "1")
+```
+Generate the summary statistics table
+```{r stats pct10}
+Bart_MIA_Statistics.s$Pct10<-c(cm[["overall"]][["Accuracy"]],cm[["byClass"]][["Sensitivity"]],cm[["byClass"]][["Specificity"]],cm[["byClass"]][["Balanced Accuracy"]],NA,NA,NA)
+rm(cm)
+```
+
+ROC Curve
+```{r ROC pct10}
+roc_BART.s<- roc.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct10),
+                     weights.class0 = as.numeric(test.pct$export.pct10),
+                     curve = T)
+
+Bart_MIA_Statistics.s[5,5]<-roc_BART.s[["auc"]]
+
+rm(roc_BART.s)
+```
+PR Curve
+```{r PR pct10}
+pr_BARTs.s <- pr.curve(scores.class0 =as.numeric(test.pct$bart_mia_prob.pct10),
+                     weights.class0 =as.numeric(test.pct$export.pct10),
+                     curve = T)
+
+Bart_MIA_Statistics.s[6,5]<-pr_BARTs.s[["auc.integral"]]
+rm(pr_BARTs.s)
+
+```
+Add sample size and round the decimals
+```{r size pct10}
+Bart_MIA_Statistics.s[7,5]<-nrow(test.pct)
+
+
+Bart_MIA_Statistics.s[,5] <- sapply(Bart_MIA_Statistics.s[,5],as.numeric)
+Bart_MIA_Statistics.s=Bart_MIA_Statistics.s %>% mutate_if(is.numeric, ~round(., 3))
+```
+
+## Export Share Summary results
+See the results:
+```{r pcts final stats}
+Bart_MIA_Statistics.s%>%
+  knitr::kable(digits = 4,row.names=FALSE,format.args = list(big.mark = ","))%>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria")
+```
+# Cut-off
+
+Generate Sensitivity and Specificity at different probability thresholds
+```{r}
+rm(list=ls())
+load("/Users/francescamicocci/Documents/Export_project/Data/results.RData")
+
+cutoffs<-data.frame(matrix(vector(), 99, 3,
+                dimnames=list(c(), c("cutoff","Sensitivity", "Specificity"))),
+                stringsAsFactors=F)
+cutoff_ls<-seq(0.01,1,0.01)
+for (i in 1:99){
+  predictions<-ifelse(results$bart_mia_prob>cutoff_ls[i],1,0)
+  tab<-table(predictions,results$export)
+  sensitivity<-tab[2,2]/(tab[2,2]+tab[2,1])
+  specificity<-tab[1,1]/(tab[1,1]+tab[1,2])
+  cutoffs[i,1]<-cutoff_ls[i]
+  cutoffs[i,2]<-sensitivity
+  cutoffs[i,3]<-specificity
+}
+
+
+cutoffs <- melt(cutoffs, id.vars = c("cutoff"))
+```
+plot the Sensitivity and Specificity graphs at different probability threshols
+```{r}
+
+ggplot(cutoffs,aes(x=cutoff,y=value,color=variable))+geom_point()+theme_bw()+labs(y= "Sensitivity/Specificity", x = "Probability cut-off",colour = " ") 
+```
+
+
+
+
