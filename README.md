@@ -13,7 +13,7 @@ and up to 2.5 times more capital to get to foreign markets.
 
 
 ## Data
-We source firm-level information from ORBIS, compiled by the Bureau Van Dijk.
+We source firm-level information from ORBIS, compiled by the [Bureau Van Dijk](https://www.bvdinfo.com/en-gb/).
 
 ## Code Structure
 
