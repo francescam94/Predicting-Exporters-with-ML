@@ -1,5 +1,5 @@
 *set directory
-cd /your/directory/
+cd "/your/directory/"
 
 *Merge with FDI dataset
 use "Export_project/Data/Data_panel_TFP.dta", replace
