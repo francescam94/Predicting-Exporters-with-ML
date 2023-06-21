@@ -1,12 +1,15 @@
 *Start by cleaning the environment
 clear all
+
+*set directory 
+cd /your/directory/
+
 *Generate a global of nace codes to be used for TFP and Markups computation
 global naces 10 11 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 
 
-
 *Subset the dataset by Nace code and compute in each TFP using ACFEST and Markups following similar approach to Markupest
 foreach i in $naces{
-use "/Users/francescamicocci/Documents/Export_project/Data/Data_panel_1.dta"
+use "Export_project/Data/Data_panel_1.dta"
 destring nace_2d, replace
 *Take the observations belonging to the same sector
 keep if (nace_2d==`i')
@@ -62,18 +65,18 @@ replace markups=. if markups<0
 replace markups=25 if !missing(markups)&markups>25
 drop theta-alpha
 
-save "/Users/francescamicocci/Documents/Export_project/Data/data_`i'.dta", replace
+save "Export_project/Data/data_`i'.dta", replace
 clear all
 
 }
 
-use "/Users/francescamicocci/Documents/Export_project/Data/data_10.dta"
+use "Export_project/Data/data_10.dta"
 
 foreach i in $naces { 
-append using "/Users/francescamicocci/Documents/Export_project/Data/Data_`i'.dta" 
+append using "Export_project/Data/Data_`i'.dta" 
 }
 
 duplicates drop
 
 
-save "/Users/francescamicocci/Documents/Export_project/Data/Data_panel_TFP.dta",replace
+save "Export_project/Data/Data_panel_TFP.dta",replace
